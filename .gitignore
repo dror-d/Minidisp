@@ -1,0 +1,24 @@
+# PlatformIO
+firmware/.pio/
+
+# Generated: synced from /themes by sync_themes.py
+firmware/data/
+
+# .NET / Visual Studio
+companion/**/bin/
+companion/**/obj/
+.vs/
+**/.vs/
+*.user
+
+# Flasher build artifacts (staged by firmware/scripts/release.py)
+flasher/firmware/
+
+# Claude Code session files
+.claude/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

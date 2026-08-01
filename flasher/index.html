@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minidisp Flasher</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root {
+      --bg: #101418;
+      --panel: #171d24;
+      --fg: #e6e6e6;
+      --muted: #5a6570;
+      --accent: #00c8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    h1 { margin: 0.5rem 0 0; font-weight: 600; }
+    h1 span { color: var(--accent); }
+    p.tagline { color: var(--muted); margin-top: 0.4rem; text-align: center; }
+    .devices {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      max-width: 900px;
+      width: 100%;
+      margin-top: 2rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid #232c36;
+      border-radius: 10px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .card h2 { margin: 0; font-size: 1.05rem; }
+    .card .meta { color: var(--muted); font-size: 0.85rem; flex: 1; }
+    esp-web-install-button::part(button) {
+      background: var(--accent);
+      color: #04202c;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .notes {
+      max-width: 900px;
+      margin-top: 2.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .notes code { background: #202830; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <h1>Mini<span>disp</span> Flasher</h1>
+  <p class="tagline">PC status display firmware for ESP32 touch screens.<br>
+     Plug in your device, pick it below, and click Install.</p>
+
+  <div class="devices">
+    <div class="card">
+      <h2>CYD 2.8&quot; (ESP32-2432S028R)</h2>
+      <div class="meta">Cheap Yellow Display, ILI9341 320x240, resistive touch, CH340 USB.</div>
+      <esp-web-install-button manifest="firmware/cyd/manifest.json"></esp-web-install-button>
+    </div>
+
+    <div class="card">
+      <h2>CYD 2.8&quot; v3 (ST7789 panel)</h2>
+      <div class="meta">Same board with an ST7789 panel — use this if the standard CYD build shows garbled or inverted colors.</div>
+      <esp-web-install-button manifest="firmware/cyd-st7789/manifest.json"></esp-web-install-button>
+    </div>
+
+    <div class="card">
+      <h2>ESP32-C6 Touch LCD 1.47&quot;</h2>
+      <div class="meta">Waveshare, ST7789 172x320, capacitive touch, native USB. (Bring-up pending.)</div>
+      <esp-web-install-button manifest="firmware/esp32c6-147/manifest.json"></esp-web-install-button>
+    </div>
+
+    <div class="card">
+      <h2>ESP32-1732S019 1.9&quot;</h2>
+      <div class="meta">ST7789 170x320 on ESP32-S3, no touch. (Bring-up pending.)</div>
+      <esp-web-install-button manifest="firmware/esp32-1732s019/manifest.json"></esp-web-install-button>
+    </div>
+  </div>
+
+  <div class="notes">
+    <strong>Notes</strong>
+    <ul>
+      <li>Works in Chrome or Edge (Web Serial API). Safari and mobile browsers are not supported.</li>
+      <li>CYD boards need the <a href="https://www.wch-ic.com/downloads/CH341SER_ZIP.html">CH340 driver</a> installed before the COM port appears.</li>
+      <li>If connecting fails, hold the <code>BOOT</code> button while clicking Install, then release it.</li>
+      <li>After flashing, run the <strong>Minidisp Companion</strong> app on your PC — the display connects automatically.</li>
+      <li>Buttons stay greyed out until firmware binaries are staged with <code>python firmware/scripts/release.py</code>.</li>
+    </ul>
+  </div>
+</body>
+</html>

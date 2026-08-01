@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minidisp native XML schema. Point the companion app at a file like this
+     (any tool that rewrites it counts as "auto-updating"). All elements and
+     attributes are optional — the display renders what it receives. -->
+<minidisp>
+  <host>MYPC</host>
+  <uptime>123456</uptime>
+  <cpu load="42.1" temp="56" freq="3.8" name="Ryzen 7 5800X" cores="35.1,46.2,55.3,44.8" />
+  <mem pct="61.2" used="9.8" total="16" />
+  <gpu load="17" temp="48" name="RTX 3070" />
+  <net if="Ethernet" ip="192.168.1.10" up="1.2" down="34.5" />
+  <disk n="C:" pct="75" free="250.1" />
+</minidisp>

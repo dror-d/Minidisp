@@ -1,0 +1,40 @@
+{
+  "name": "Terminal",
+  "author": "VVS",
+  "version": 1,
+  "colors": {
+    "bg": "#000000",
+    "fg": "#33FF33",
+    "accent": "#33FF33",
+    "accent2": "#99FF99",
+    "muted": "#1A661A",
+    "warn": "#FF3333"
+  },
+  "warnAbove": { "cpu.load": 95, "cpu.temp": 85, "mem.pct": 90 },
+  "pages": [
+    {
+      "name": "Status",
+      "widgets": [
+        { "type": "text", "text": "> minidisp --status", "x": 30, "y": 35, "size": "sm", "color": "muted" },
+        { "type": "text", "bind": "host", "fmt": "HOST {v}", "x": 30, "y": 130, "size": "md" },
+        { "type": "text", "bind": "cpu.load", "fmt": "CPU  {v:.0f}%", "x": 30, "y": 255, "size": "md" },
+        { "type": "bar", "bind": "cpu.load", "x": 480, "y": 265, "w": 480, "h": 42, "bg": "#0A330A" },
+        { "type": "text", "bind": "cpu.temp", "fmt": "TMP  {v:.0f} C", "x": 30, "y": 380, "size": "md" },
+        { "type": "text", "bind": "mem.pct", "fmt": "MEM  {v:.0f}%", "x": 30, "y": 505, "size": "md" },
+        { "type": "bar", "bind": "mem.pct", "x": 480, "y": 515, "w": 480, "h": 42, "bg": "#0A330A" },
+        { "type": "text", "bind": "mem.used", "fmt": "USED {v:.1f} GB", "x": 30, "y": 630, "size": "md" },
+        { "type": "text", "bind": "net.ip", "fmt": "IP   {v}", "x": 30, "y": 755, "size": "md" },
+        { "type": "text", "bind": "net.down", "fmt": "DN   {v:.1f} Mbps", "x": 30, "y": 880, "size": "md", "color": "accent2" }
+      ]
+    },
+    {
+      "name": "History",
+      "widgets": [
+        { "type": "text", "text": "> cpu --history", "x": 30, "y": 35, "size": "sm", "color": "muted" },
+        { "type": "chart", "bind": "cpu.load", "x": 30, "y": 150, "w": 940, "h": 580, "min": 0, "max": 100, "points": 80 },
+        { "type": "text", "bind": "cpu.load", "fmt": "LOAD {v:.0f}%", "x": 30, "y": 810, "size": "md" },
+        { "type": "text", "bind": "uptime", "fmt": "UPTM {v}", "x": 540, "y": 810, "size": "md", "color": "accent2" }
+      ]
+    }
+  ]
+}

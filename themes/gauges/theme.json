@@ -1,0 +1,39 @@
+{
+  "name": "Gauges",
+  "author": "VVS",
+  "version": 1,
+  "colors": {
+    "bg": "#0B0F14",
+    "fg": "#F0F4F8",
+    "accent": "#00C8FF",
+    "accent2": "#7CFC00",
+    "muted": "#2A3540",
+    "warn": "#FF5040"
+  },
+  "warnAbove": { "cpu.load": 95, "cpu.temp": 85, "mem.pct": 90, "gpu.load": 98 },
+  "pages": [
+    {
+      "name": "Dials",
+      "widgets": [
+        { "type": "image", "src": "logo.png", "x": 500, "y": 110, "anchor": "mc", "w": 120 },
+        { "type": "arc", "bind": "cpu.load", "x": 170, "y": 480, "anchor": "mc", "r": 140, "thickness": 30, "label": true, "size": "md" },
+        { "type": "text", "text": "CPU", "x": 170, "y": 780, "anchor": "mc", "size": "sm", "color": "muted" },
+        { "type": "arc", "bind": "mem.pct", "x": 500, "y": 480, "anchor": "mc", "r": 140, "thickness": 30, "color": "accent2", "label": true, "size": "md" },
+        { "type": "text", "text": "RAM", "x": 500, "y": 780, "anchor": "mc", "size": "sm", "color": "muted" },
+        { "type": "arc", "bind": "gpu.load", "x": 830, "y": 480, "anchor": "mc", "r": 140, "thickness": 30, "color": "#FFB84D", "label": true, "size": "md" },
+        { "type": "text", "text": "GPU", "x": 830, "y": 780, "anchor": "mc", "size": "sm", "color": "muted" },
+        { "type": "text", "bind": "host", "fmt": "{v}", "x": 500, "y": 920, "anchor": "mc", "size": "sm", "color": "muted" }
+      ]
+    },
+    {
+      "name": "Network",
+      "widgets": [
+        { "type": "text", "text": "NETWORK", "x": 500, "y": 60, "anchor": "tc", "size": "sm", "color": "muted" },
+        { "type": "text", "bind": "net.ip", "fmt": "{v}", "x": 500, "y": 150, "anchor": "tc", "size": "md" },
+        { "type": "chart", "bind": "net.down", "x": 60, "y": 300, "w": 880, "h": 420, "autoscale": true, "points": 60 },
+        { "type": "text", "bind": "net.down", "fmt": "DN {v:.1f} Mbps", "x": 60, "y": 790, "size": "md", "color": "accent" },
+        { "type": "text", "bind": "net.up", "fmt": "UP {v:.1f} Mbps", "x": 540, "y": 790, "size": "md", "color": "accent2" }
+      ]
+    }
+  ]
+}
