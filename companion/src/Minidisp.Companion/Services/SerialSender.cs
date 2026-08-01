@@ -30,6 +30,14 @@ public sealed class SerialSender : IDisposable
 
     public string Status { get; private set; } = "Searching for device...";
     public DeviceInfo? Device { get; private set; }
+    public bool IsConnected => _port is not null;
+
+    /// <summary>While true the stats push is suspended (used during uploads).</summary>
+    public bool PauseStats { get; set; }
+
+    private readonly object _writeGate = new();
+    private string? _pendingCmd;
+    private TaskCompletionSource<(bool Ok, string? Error)>? _pendingTcs;
 
     public sealed record DeviceInfo(string Port, string Board, string Version,
         string[] Themes, string CurrentTheme);
@@ -49,11 +57,79 @@ public sealed class SerialSender : IDisposable
     {
         try
         {
-            _port?.WriteLine(JsonSerializer.Serialize(command));
+            lock (_writeGate) _port?.WriteLine(JsonSerializer.Serialize(command));
         }
         catch (Exception ex)
         {
             _log.LogWarning("Command send failed: {Error}", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Sends a command and waits for the device's matching {"ack"}/{"err"}
+    /// (drained by the sender thread). Used by theme uploads for flow control.
+    /// </summary>
+    public async Task<(bool Ok, string? Error)> SendCommandAsync(object command,
+        string cmdName, int timeoutMs = 4000)
+    {
+        var port = _port;
+        if (port is null) return (false, "not connected");
+        var tcs = new TaskCompletionSource<(bool, string?)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        lock (_writeGate)
+        {
+            _pendingCmd = cmdName;
+            _pendingTcs = tcs;
+        }
+        try
+        {
+            lock (_writeGate) port.WriteLine(JsonSerializer.Serialize(command));
+            var winner = await Task.WhenAny(tcs.Task, Task.Delay(timeoutMs));
+            return winner == tcs.Task ? await tcs.Task : (false, "timeout");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+        finally
+        {
+            lock (_writeGate)
+            {
+                _pendingCmd = null;
+                _pendingTcs = null;
+            }
+        }
+    }
+
+    private void TryCompleteAck(string line)
+    {
+        TaskCompletionSource<(bool, string?)>? tcs;
+        string? cmd;
+        lock (_writeGate)
+        {
+            tcs = _pendingTcs;
+            cmd = _pendingCmd;
+        }
+        if (tcs is null || cmd is null) return;
+        try
+        {
+            using var doc = JsonDocument.Parse(line);
+            if (doc.RootElement.TryGetProperty("ack", out var ack) &&
+                ack.GetString() == cmd)
+            {
+                tcs.TrySetResult((true, null));
+            }
+            else if (doc.RootElement.TryGetProperty("err", out var err) &&
+                     err.TryGetProperty("cmd", out var errCmd) &&
+                     errCmd.GetString() == cmd)
+            {
+                tcs.TrySetResult((false,
+                    err.TryGetProperty("msg", out var msg) ? msg.GetString() : "device error"));
+            }
+        }
+        catch (JsonException)
+        {
+            // non-JSON noise on the wire — ignore
         }
     }
 
@@ -79,13 +155,18 @@ public sealed class SerialSender : IDisposable
                     }
                 }
 
-                var snapshot = _sourceProvider().GetSnapshot();
-                if (snapshot is not null)
+                if (!PauseStats)
                 {
-                    _port.WriteLine(snapshot.ToProtocolLine());
+                    var snapshot = _sourceProvider().GetSnapshot();
+                    if (snapshot is not null)
+                    {
+                        lock (_writeGate) _port.WriteLine(snapshot.ToProtocolLine());
+                    }
                 }
                 DrainIncoming(_port);
-                _cts.Token.WaitHandle.WaitOne(_interval);
+                // Poll fast while an upload is waiting on acks.
+                _cts.Token.WaitHandle.WaitOne(
+                    PauseStats ? TimeSpan.FromMilliseconds(20) : _interval);
             }
             catch (Exception ex) when (ex is IOException or InvalidOperationException
                 or UnauthorizedAccessException or TimeoutException)
@@ -202,6 +283,7 @@ public sealed class SerialSender : IDisposable
         {
             string? line = TryReadLine(port);
             if (line is null) break;
+            TryCompleteAck(line);
             _log.LogDebug("Device: {Line}", line.Trim());
         }
     }

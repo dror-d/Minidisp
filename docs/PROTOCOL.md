@@ -50,6 +50,24 @@ Units: temps °C, mem/disk free GB, net rates Mbit/s, uptime seconds, loads/pct 
 {"cmd":"brightness","v":80}          // backlight 0-100 (persisted)
 ```
 
+### Theme upload (fs.*) — protocol v1.1
+
+Streams a file into `/themes/` on the device's LittleFS (used by the companion
+theme editor's "Push to device"). Every command is acked; the sender must wait
+for each `ack` before the next chunk (flow control for the 4KB RX buffer).
+
+```json
+{"cmd":"fs.begin","path":"/themes/mytheme/theme.json","size":2048}
+{"cmd":"fs.data","b64":"<base64 of up to 768 raw bytes>"}   // repeat
+{"cmd":"fs.end"}
+```
+
+Rules: `path` must start with `/themes/` (no `..`), max file size 64KB. The
+file is written to a temp file and atomically renamed on `fs.end`; the theme
+list is rescanned and the current theme hot-reloads if it was the one updated.
+Errors (`bad path`, `bad size`, `bad base64`, `write failed`, `size mismatch`,
+`rename failed`) abort the upload.
+
 ## Bind paths (used by themes, see THEMES.md)
 
 `host`, `uptime`, `cpu.load`, `cpu.temp`, `cpu.freq`, `cpu.name`, `cpu.core0`..`cpu.core31`,

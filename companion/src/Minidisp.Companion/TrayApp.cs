@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Minidisp.Companion.Editor;
 using Minidisp.Companion.Services;
 
 namespace Minidisp.Companion;
@@ -50,6 +51,7 @@ public sealed class TrayApp : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_themesMenu);
         menu.Items.Add(brightnessMenu);
+        menu.Items.Add(new ToolStripMenuItem("Theme Editor...", null, (_, _) => OpenEditor()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => ExitThread()));
 
@@ -146,6 +148,20 @@ public sealed class TrayApp : ApplicationContext
             _themesMenu.DropDownItems.Add(item);
         }
         _themesMenu.Enabled = _themesMenu.DropDownItems.Count > 0;
+    }
+
+    private ThemeEditorForm? _editor;
+
+    private void OpenEditor()
+    {
+        if (_editor is { IsDisposed: false })
+        {
+            _editor.BringToFront();
+            _editor.Activate();
+            return;
+        }
+        _editor = new ThemeEditorForm(_sender, () => _source.GetSnapshot());
+        _editor.Show();
     }
 
     /// <summary>Simple generated 16x16 icon: dark tile with a cyan bar chart.</summary>
