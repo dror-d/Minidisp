@@ -22,12 +22,18 @@ public sealed class TrayApp : ApplicationContext
     private readonly ToolStripMenuItem _xmlItem;
     private readonly ToolStripMenuItem _themesMenu;
 
+    // Hidden control whose handle anchors all UI marshaling: serial-thread
+    // events must never touch menu items directly (a submenu created on a
+    // background thread permanently breaks the tray context menu).
+    private readonly Control _uiMarshal = new();
+
     public TrayApp(ILoggerFactory loggerFactory)
     {
         _loggerFactory = loggerFactory;
         _log = loggerFactory.CreateLogger<TrayApp>();
         _settings = Settings.Load();
         _source = CreateSource(_settings.Mode);
+        _ = _uiMarshal.Handle; // force handle creation here, on the UI thread
 
         _statusItem = new ToolStripMenuItem("Searching for device...") { Enabled = false };
         _liveItem = new ToolStripMenuItem("Source: Live sensors", null, (_, _) => SwitchMode(SourceMode.Live));
@@ -62,6 +68,7 @@ public sealed class TrayApp : ApplicationContext
             ContextMenuStrip = menu,
             Visible = true,
         };
+        _icon.DoubleClick += (_, _) => OpenEditor();
 
         UpdateModeChecks();
 
@@ -79,9 +86,15 @@ public sealed class TrayApp : ApplicationContext
 
     private void RunOnUi(Action action)
     {
-        var strip = _icon.ContextMenuStrip;
-        if (strip is not null && strip.IsHandleCreated) strip.BeginInvoke(action);
-        else action();
+        if (_uiMarshal.IsDisposed) return;
+        try
+        {
+            _uiMarshal.BeginInvoke(action);
+        }
+        catch (InvalidOperationException)
+        {
+            // shutting down — handle already destroyed
+        }
     }
 
     private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max];
@@ -185,6 +198,7 @@ public sealed class TrayApp : ApplicationContext
         _icon.Dispose();
         _sender.Dispose();
         _source.Dispose();
+        _uiMarshal.Dispose();
         base.ExitThreadCore();
     }
 }

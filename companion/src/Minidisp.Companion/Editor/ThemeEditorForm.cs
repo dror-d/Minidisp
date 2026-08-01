@@ -72,7 +72,7 @@ public sealed class ThemeEditorForm : Form
         _props.Changed += (_, _) => { MarkDirty(); _canvas.Invalidate(); };
         _props.ShowWidget(null, _doc);
 
-        _liveTimer.Tick += (_, _) => LiveTick();
+        _liveTimer.Tick += async (_, _) => await LiveTick();
         KeyDown += OnKey;
         FormClosing += OnClosingConfirm;
 
@@ -449,10 +449,23 @@ public sealed class ThemeEditorForm : Form
         }
     }
 
-    private void LiveTick()
+    private bool _liveBusy;
+
+    private async Task LiveTick()
     {
-        var snap = _liveSnapshot?.Invoke();
-        if (snap is null) return;
+        if (_liveBusy || _liveSnapshot is null) return;
+        _liveBusy = true;
+        StatsSnapshot? snap;
+        try
+        {
+            // Sensor polling takes 50-300ms — keep it off the UI thread.
+            snap = await Task.Run(_liveSnapshot);
+        }
+        finally
+        {
+            _liveBusy = false;
+        }
+        if (snap is null || IsDisposed) return;
         var stats = new SnapshotStats(snap);
         _canvas.Stats = stats;
         foreach (var page in _doc.Pages)
