@@ -33,6 +33,9 @@ public sealed class PropertyPanel : UserControl
     /// <summary>Raised right before a change is applied (undo snapshot hook).</summary>
     public event EventHandler? BeforeChange;
 
+    /// <summary>Supplies the current stats snapshot for the bind picker tree.</summary>
+    public Func<Models.StatsSnapshot?>? SnapshotProvider { get; set; }
+
     public PropertyPanel()
     {
         _table = new TableLayoutPanel
@@ -201,13 +204,31 @@ public sealed class PropertyPanel : UserControl
 
     private void AddBind(ThemeWidget widget)
     {
-        var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown };
+        var panel = new TableLayoutPanel { ColumnCount = 2, Height = 26 };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
+
+        var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, Dock = DockStyle.Fill };
         combo.Items.AddRange(BindPaths);
         combo.Text = widget.Bind ?? "";
         void CommitBind() => Commit(() => _widget!.Bind = Blank(combo.Text));
         combo.SelectedIndexChanged += (_, _) => CommitBind();
         combo.Leave += (_, _) => CommitBind();
-        AddRow("Bind", combo);
+
+        var pick = new Button { Text = "…", Dock = DockStyle.Fill, Margin = new Padding(1) };
+        pick.Click += (_, _) =>
+        {
+            if (_widget is null) return;
+            var result = BindPickerDialog.Pick(FindForm()!, _widget, isText: false,
+                SnapshotProvider?.Invoke(), new SampleStats());
+            if (result is null) return;
+            combo.Text = result.Bind ?? "";
+            Commit(() => _widget.Bind = result.Bind);
+        };
+
+        panel.Controls.Add(combo);
+        panel.Controls.Add(pick);
+        AddRow("Bind", panel);
     }
 
     private void AddMinMax(ThemeWidget widget)

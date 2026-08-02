@@ -72,6 +72,7 @@ public sealed class ThemeEditorForm : Form
         };
         _props.BeforeChange += (_, _) => PushUndo();
         _props.Changed += (_, _) => { MarkDirty(); _canvas.Invalidate(); };
+        _props.SnapshotProvider = TryGetSnapshot;
         _props.ShowWidget(null, _doc);
 
         _liveTimer.Tick += async (_, _) => await LiveTick();
@@ -368,24 +369,20 @@ public sealed class ThemeEditorForm : Form
         }
     }
 
+    private StatsSnapshot? TryGetSnapshot()
+    {
+        try { return _liveSnapshot?.Invoke(); }
+        catch { return null; }
+    }
+
     private void EditTextWidget(ThemeWidget w)
     {
-        if (string.IsNullOrEmpty(w.Bind))
-        {
-            var text = Prompt("Text to display (static — or set a Bind in the panel for live values):",
-                w.Text ?? "", multiline: false);
-            if (text is null) return;
-            PushUndo();
-            w.Text = text;
-        }
-        else
-        {
-            var fmt = Prompt($"Format for '{w.Bind}' — {{v}} inserts the value, {{v:.1f}} with decimals:",
-                w.Fmt ?? "{v:.0f}", multiline: false);
-            if (fmt is null) return;
-            PushUndo();
-            w.Fmt = string.IsNullOrWhiteSpace(fmt) ? null : fmt;
-        }
+        var result = BindPickerDialog.Pick(this, w, isText: true, TryGetSnapshot(), _canvas.Stats);
+        if (result is null) return;
+        PushUndo();
+        w.Bind = result.Bind;
+        w.Fmt = result.Fmt;
+        w.Text = result.StaticText;
         MarkDirty();
         _canvas.Invalidate();
         _props.ShowWidget(_canvas.SelectedWidget, _doc);
@@ -393,12 +390,10 @@ public sealed class ThemeEditorForm : Form
 
     private void EditBind(ThemeWidget w)
     {
-        var bind = Prompt(
-            "Data bind path (sensor path like cpu.load, or a custom XML value id):",
-            w.Bind ?? "", multiline: false);
-        if (bind is null) return;
+        var result = BindPickerDialog.Pick(this, w, isText: false, TryGetSnapshot(), _canvas.Stats);
+        if (result is null) return;
         PushUndo();
-        w.Bind = string.IsNullOrWhiteSpace(bind) ? null : bind.Trim();
+        w.Bind = result.Bind;
         MarkDirty();
         _canvas.Invalidate();
         _props.ShowWidget(_canvas.SelectedWidget, _doc);
@@ -424,10 +419,33 @@ public sealed class ThemeEditorForm : Form
             File.Copy(dialog.FileName, target, overwrite: true);
         PushUndo();
         w.Src = fileName;
+        AutoFitImage(w, target);
         WidgetRenderer.ClearImageCache();
         MarkDirty();
         _canvas.Invalidate();
         _props.ShowWidget(_canvas.SelectedWidget, _doc);
+    }
+
+    /// <summary>
+    /// Shrinks images larger than the screen to ~60% of the canvas so the
+    /// resize handle stays reachable (the device applies the same W scaling).
+    /// </summary>
+    private void AutoFitImage(ThemeWidget w, string imagePath)
+    {
+        try
+        {
+            using var img = Image.FromFile(imagePath);
+            var screen = _canvas.ScreenSize;
+            if (img.Width <= screen.Width * 0.9 && img.Height <= screen.Height * 0.9)
+                return;
+            var scale = Math.Min(0.6f * screen.Width / img.Width,
+                                 0.6f * screen.Height / img.Height);
+            w.W = Math.Max(20, (int)Math.Round(1000f * img.Width * scale / screen.Width));
+        }
+        catch (Exception)
+        {
+            // unreadable image — leave size as-is, renderer shows a placeholder
+        }
     }
 
     private void DuplicateSelected()

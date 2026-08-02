@@ -1,0 +1,62 @@
+{
+  "name": "My Theme",
+  "author": "Kino",
+  "version": 1,
+  "colors": {
+    "bg": "#101418",
+    "fg": "#E6E6E6",
+    "accent": "#00C8FF",
+    "accent2": "#7CFC00",
+    "muted": "#5A6570",
+    "warn": "#FF5040"
+  },
+  "warnAbove": {
+    "cpu.load": 95,
+    "cpu.temp": 85,
+    "mem.pct": 90
+  },
+  "pages": [
+    {
+      "name": "Page 1",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 40,
+          "y": 60,
+          "text": "CPU",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 140,
+          "bind": "cpu.load",
+          "fmt": "{v:.0f}%",
+          "size": "xl"
+        },
+        {
+          "type": "bar",
+          "x": 40,
+          "y": 320,
+          "w": 920,
+          "h": 50,
+          "bind": "cpu.load"
+        },
+        {
+          "type": "text",
+          "x": 400,
+          "y": 450,
+          "bind": "cpu.load",
+          "fmt": "{v:.0f}%"
+        },
+        {
+          "type": "image",
+          "x": 40,
+          "y": 40,
+          "src": "logo.png"
+        }
+      ]
+    }
+  ]
+}
