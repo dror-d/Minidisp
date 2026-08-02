@@ -5,24 +5,38 @@ namespace Minidisp.Companion.Editor;
 /// <summary>
 /// Friendly data-source picker: a categorized tree of everything a widget can
 /// bind to — sensor fields with readable names plus the custom XML value ids
-/// present in the current snapshot — with format editing and a live preview.
+/// present in the current snapshot — with static text, format, and text-size
+/// editing and a live preview of the rendered result.
 /// </summary>
 public sealed class BindPickerDialog : Form
 {
-    public sealed record Result(string? Bind, string? Fmt, string? StaticText);
+    public sealed record Result(string? Bind, string? Fmt, string? StaticText, string? Size);
 
-    private readonly TreeView _tree = new() { Dock = DockStyle.Fill, HideSelection = false };
+    private static readonly string[] SizeOptions =
+        ["sm", "md", "lg", "xl", "12", "14", "16", "20", "24", "28", "36"];
+
+    private readonly TreeView _tree = new()
+    {
+        Dock = DockStyle.Fill,
+        HideSelection = false,
+        BorderStyle = BorderStyle.FixedSingle,
+    };
     private readonly TextBox _bind = new() { Dock = DockStyle.Fill };
     private readonly TextBox _static = new() { Dock = DockStyle.Fill };
     private readonly TextBox _fmt = new() { Dock = DockStyle.Fill };
+    private readonly ComboBox _size = new() { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDown };
     private readonly Label _preview = new()
     {
         Dock = DockStyle.Fill,
-        ForeColor = Color.DarkCyan,
+        ForeColor = Color.FromArgb(0, 130, 170),
+        Font = new Font("Segoe UI", 11f, FontStyle.Bold),
         TextAlign = ContentAlignment.MiddleLeft,
+        AutoEllipsis = true,
     };
     private readonly IStatsProvider _previewStats;
     private readonly bool _isText;
+    private int _fieldRow;
+    private TableLayoutPanel _fields = null!;
 
     /// <summary>Opens the picker. Returns null when cancelled.</summary>
     public static Result? Pick(IWin32Window owner, ThemeWidget widget, bool isText,
@@ -39,57 +53,80 @@ public sealed class BindPickerDialog : Form
         _isText = isText;
 
         Text = isText ? "Text content" : "Data source";
-        Size = new Size(460, isText ? 620 : 520);
+        ClientSize = new Size(520, isText ? 680 : 520);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterParent;
         MinimizeBox = MaximizeBox = false;
 
-        var table = new TableLayoutPanel
+        var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            Padding = new Padding(10),
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(14, 12, 14, 10),
         };
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 86));
-        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));   // intro
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // tree
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));   // fields
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));   // buttons
 
-        table.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        var treeLabel = new Label { Text = "Data", AutoSize = true, Margin = new Padding(0, 4, 0, 0) };
-        table.Controls.Add(treeLabel, 0, 0);
-        table.Controls.Add(_tree, 1, 0);
+        root.Controls.Add(new Label
+        {
+            Text = isText
+                ? "Pick a data field to show live values, or leave the bind empty for a static message:"
+                : "Pick the data field this widget displays:",
+            AutoSize = true,
+            Margin = new Padding(0, 0, 0, 6),
+        }, 0, 0);
 
-        AddRow(table, "Bind path", _bind,
-            "The raw path — pick from the tree above or type a custom XML value id.");
+        root.Controls.Add(_tree, 0, 1);
+
+        _fields = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            ColumnCount = 2,
+            Margin = new Padding(0, 10, 0, 0),
+        };
+        _fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+        _fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        AddField("Bind path", _bind);
         if (isText)
         {
-            AddRow(table, "Static text", _static,
-                "Shown when no bind is set (plain message on the display).");
-            AddRow(table, "Format", _fmt,
-                "{v} inserts the value; {v:.1f} = 1 decimal. Text around it is literal, e.g. \"CPU {v:.0f}%\".");
+            AddHint("Filled from the tree — or type a custom XML value id. Empty = static text.");
+            AddField("Static text", _static);
+            AddField("Format", _fmt);
+            AddHint("{v} inserts the value; {v:.1f} = 1 decimal. Around it is literal: \"CPU {v:.0f}%\"");
+            _size.Items.AddRange(SizeOptions);
+            AddField("Text size", _size);
+            AddHint("sm / md / lg / xl, or a pixel size 12–36 (snapped to device fonts).");
         }
-        AddRow(table, "Preview", _preview, null);
+        AddField("Preview", _preview);
+        root.Controls.Add(_fields, 0, 2);
 
         var buttons = new FlowLayoutPanel
         {
-            Dock = DockStyle.Bottom,
             FlowDirection = FlowDirection.RightToLeft,
-            Height = 42,
-            Padding = new Padding(8),
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 8, 0, 0),
         };
-        var ok = new Button { Text = "OK", DialogResult = DialogResult.OK };
-        var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel };
+        var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 88 };
+        var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 88 };
         buttons.Controls.Add(ok);
         buttons.Controls.Add(cancel);
         AcceptButton = ok;
         CancelButton = cancel;
+        root.Controls.Add(buttons, 0, 3);
 
-        Controls.Add(table);
-        Controls.Add(buttons);
+        Controls.Add(root);
 
         PopulateTree(snapshot);
         _bind.Text = widget.Bind ?? "";
         _static.Text = widget.Text ?? "";
         _fmt.Text = widget.Fmt ?? "{v:.0f}";
+        _size.Text = widget.Size ?? "md";
 
         _tree.AfterSelect += (_, e) =>
         {
@@ -105,24 +142,35 @@ public sealed class BindPickerDialog : Form
         UpdatePreview();
     }
 
-    private static void AddRow(TableLayoutPanel table, string label, Control control, string? hint)
+    private void AddField(string label, Control control)
     {
-        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        table.Controls.Add(new Label { Text = label, AutoSize = true, Margin = new Padding(0, 8, 0, 0) });
-        table.Controls.Add(control);
-        if (hint is null) return;
-        table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        var hintLabel = new Label
+        _fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _fields.Controls.Add(new Label
         {
-            Text = hint,
+            Text = label,
+            AutoSize = true,
+            Anchor = AnchorStyles.Left,
+            Margin = new Padding(0, 7, 6, 0),
+        }, 0, _fieldRow);
+        control.Margin = new Padding(0, 4, 0, 0);
+        if (control is Label) control.Height = 30;
+        _fields.Controls.Add(control, 1, _fieldRow);
+        _fieldRow++;
+    }
+
+    private void AddHint(string text)
+    {
+        _fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _fields.Controls.Add(new Label
+        {
+            Text = text,
             AutoSize = true,
             ForeColor = Color.Gray,
-            Font = new Font("Segoe UI", 7.5f),
-            Margin = new Padding(0, 0, 0, 4),
-            MaximumSize = new Size(320, 0),
-        };
-        table.Controls.Add(new Label(), 0, table.RowCount);
-        table.Controls.Add(hintLabel);
+            Font = new Font("Segoe UI", 7.75f),
+            Margin = new Padding(0, 1, 0, 3),
+            MaximumSize = new Size(390, 0),
+        }, 1, _fieldRow);
+        _fieldRow++;
     }
 
     private void PopulateTree(StatsSnapshot? snap)
@@ -131,8 +179,7 @@ public sealed class BindPickerDialog : Form
 
         if (_isText)
         {
-            var none = _tree.Nodes.Add("Static text (no data bind)");
-            none.Tag = "";
+            _tree.Nodes.Add(new TreeNode("Static text (no data bind)") { Tag = "" });
         }
 
         var cpu = _tree.Nodes.Add("CPU");
@@ -197,16 +244,15 @@ public sealed class BindPickerDialog : Form
         Add(system, "Host name", "host");
         Add(system, "Uptime", "uptime");
 
+        var xml = _tree.Nodes.Add("Custom values (from XML)");
         if (snap?.Custom is { Count: > 0 } custom)
         {
-            var xml = _tree.Nodes.Add("Custom values (from XML)");
             foreach (var kv in custom)
                 Add(xml, $"{kv.Key}   (now: {kv.Value})", kv.Key);
             xml.Expand();
         }
         else
         {
-            var xml = _tree.Nodes.Add("Custom values (from XML)");
             xml.Nodes.Add(new TreeNode(
                 "None available — switch the source to an XML file with <value id=\"...\"> entries")
             { ForeColor = Color.Gray });
@@ -222,18 +268,20 @@ public sealed class BindPickerDialog : Form
     {
         var bind = _bind.Text.Trim();
         var text = bind.Length == 0
-            ? (_isText ? _static.Text : "(no bind)")
+            ? (_isText ? _static.Text : "(no bind selected)")
             : WidgetRenderer.FormatBind(
                 string.IsNullOrWhiteSpace(_fmt.Text) ? "{v:.0f}" : _fmt.Text, bind, _previewStats);
-        _preview.Text = text;
+        _preview.Text = text.Length == 0 ? "(empty)" : text;
     }
 
     private Result BuildResult()
     {
         var bind = _bind.Text.Trim();
+        var size = _size.Text.Trim();
         return new Result(
             bind.Length == 0 ? null : bind,
             string.IsNullOrWhiteSpace(_fmt.Text) || !_isText ? null : _fmt.Text,
-            string.IsNullOrWhiteSpace(_static.Text) ? null : _static.Text);
+            string.IsNullOrWhiteSpace(_static.Text) ? null : _static.Text,
+            !_isText || size.Length == 0 || size == "md" ? null : size);
     }
 }

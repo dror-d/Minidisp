@@ -59,13 +59,6 @@
           "bind": "gpu.load"
         },
         {
-          "type": "image",
-          "x": 650,
-          "y": 20,
-          "w": 340,
-          "src": "vvs.png"
-        },
-        {
           "type": "text",
           "x": 40,
           "y": 420,
@@ -104,6 +97,13 @@
           "y": 930,
           "bind": "host",
           "fmt": "{v:.0f}"
+        },
+        {
+          "type": "image",
+          "x": 690,
+          "y": 30,
+          "w": 240,
+          "src": "vvs.png"
         }
       ]
     }

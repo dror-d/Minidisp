@@ -50,10 +50,22 @@ public sealed class ThemeEditorForm : Form
         {
             Dock = DockStyle.Fill,
             FixedPanel = FixedPanel.Panel2,
-            SplitterDistance = 760,
+            Panel2MinSize = 300,
         };
         split.Panel1.Controls.Add(_canvas);
         split.Panel2.Controls.Add(_props);
+        split.Panel2.Controls.Add(new Label
+        {
+            Text = "  Widget properties",
+            Dock = DockStyle.Top,
+            Height = 26,
+            TextAlign = ContentAlignment.MiddleLeft,
+            BackColor = Color.FromArgb(240, 242, 245),
+            ForeColor = Color.FromArgb(70, 80, 90),
+        });
+        // SplitterDistance can only be set reliably once the control has its
+        // real size — setting it in the constructor collapsed the panel.
+        Load += (_, _) => split.SplitterDistance = Math.Max(300, split.Width - 320);
 
         Controls.Add(split);
         Controls.Add(BuildToolbar());
@@ -383,6 +395,7 @@ public sealed class ThemeEditorForm : Form
         w.Bind = result.Bind;
         w.Fmt = result.Fmt;
         w.Text = result.StaticText;
+        w.Size = result.Size;
         MarkDirty();
         _canvas.Invalidate();
         _props.ShowWidget(_canvas.SelectedWidget, _doc);
