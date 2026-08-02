@@ -46,11 +46,13 @@ public sealed class ThemeEditorForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         KeyPreview = true;
 
+        // Panel2MinSize / SplitterDistance are set in Shown below: while the
+        // control still has its default 150px width, ANY such assignment
+        // violates "SplitterDistance <= Width - Panel2MinSize" and throws.
         var split = new SplitContainer
         {
             Dock = DockStyle.Fill,
             FixedPanel = FixedPanel.Panel2,
-            Panel2MinSize = 300,
         };
         split.Panel1.Controls.Add(_canvas);
         split.Panel2.Controls.Add(_props);
@@ -63,13 +65,12 @@ public sealed class ThemeEditorForm : Form
             BackColor = Color.FromArgb(240, 242, 245),
             ForeColor = Color.FromArgb(70, 80, 90),
         });
-        // SplitterDistance is only valid once the control has its real size,
-        // and must stay within [Panel1MinSize, Width - Panel2MinSize].
         Shown += (_, _) =>
         {
-            var max = split.Width - split.Panel2MinSize;
-            if (max > split.Panel1MinSize)
-                split.SplitterDistance = Math.Clamp(split.Width - 320, split.Panel1MinSize, max);
+            if (split.Width < 400) return; // window unusably small — keep defaults
+            split.Panel2MinSize = 300;
+            split.SplitterDistance = Math.Clamp(split.Width - 320,
+                split.Panel1MinSize, split.Width - split.Panel2MinSize);
         };
 
         Controls.Add(split);
