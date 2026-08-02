@@ -26,14 +26,27 @@ public static class WidgetRenderer
     private static int PmY(int pm, Size s) => pm * s.Height / 1000;
     private static int PmR(int pm, Size s) => pm * Math.Min(s.Width, s.Height) / 1000;
 
-    /// <summary>Firmware font mapping: sm/md/lg/xl px per screen class.</summary>
+    private static readonly int[] DevicePx = [12, 14, 16, 20, 24, 28, 36];
+
+    /// <summary>
+    /// Firmware font mapping: sm/md/lg/xl per screen class, or a numeric size
+    /// ("20") snapped to the nearest font compiled into the firmware.
+    /// </summary>
     public static Font GetFont(string? size, Size screen)
     {
-        var px = (screen.Height <= 240, size) switch
+        float px;
+        if (size is { Length: > 0 } && char.IsDigit(size[0]) && int.TryParse(size, out var n))
         {
-            (true, "sm") => 12f, (true, "lg") => 20f, (true, "xl") => 28f, (true, _) => 14f,
-            (false, "sm") => 14f, (false, "lg") => 24f, (false, "xl") => 36f, (false, _) => 16f,
-        };
+            px = DevicePx.MinBy(p => Math.Abs(p - n));
+        }
+        else
+        {
+            px = (screen.Height <= 240, size) switch
+            {
+                (true, "sm") => 12f, (true, "lg") => 20f, (true, "xl") => 28f, (true, _) => 14f,
+                (false, "sm") => 14f, (false, "lg") => 24f, (false, "xl") => 36f, (false, _) => 16f,
+            };
+        }
         if (!FontCache.TryGetValue(px, out var font))
             FontCache[px] = font = new Font("Segoe UI", px * 0.75f, FontStyle.Regular, GraphicsUnit.Point);
         return font;

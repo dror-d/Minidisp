@@ -52,8 +52,29 @@ lv_color_t parseColor(const ThemeCtx& ctx, const char* s, lv_color_t fallback) {
     return fallback;
 }
 
+// Nearest compiled Montserrat font for a numeric pixel size.
+const lv_font_t* fontByPx(int px) {
+    static const struct { int px; const lv_font_t* font; } kFonts[] = {
+        {12, &lv_font_montserrat_12}, {14, &lv_font_montserrat_14},
+        {16, &lv_font_montserrat_16}, {20, &lv_font_montserrat_20},
+        {24, &lv_font_montserrat_24}, {28, &lv_font_montserrat_28},
+        {36, &lv_font_montserrat_36},
+    };
+    const lv_font_t* best = kFonts[0].font;
+    int bestDelta = 1000;
+    for (const auto& entry : kFonts) {
+        int delta = abs(entry.px - px);
+        if (delta < bestDelta) {
+            bestDelta = delta;
+            best = entry.font;
+        }
+    }
+    return best;
+}
+
 const lv_font_t* parseFont(const ThemeCtx& ctx, const char* size) {
     if (!size) return ctx.fonts[1];
+    if (isdigit((unsigned char)size[0])) return fontByPx(atoi(size)); // "20" = 20px
     if (!strcmp(size, "sm")) return ctx.fonts[0];
     if (!strcmp(size, "lg")) return ctx.fonts[2];
     if (!strcmp(size, "xl")) return ctx.fonts[3];

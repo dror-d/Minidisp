@@ -650,11 +650,87 @@ public sealed class ThemeEditorForm : Form
         {
             if (!SaveTheme(saveAs: _themeDir is null)) return;
         }
+        string staged;
+        try
+        {
+            staged = StagePushFolder();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Push failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
         var progress = new Progress<string>(s => _status.Text = s);
-        var (ok, message) = await ThemeUploader.PushThemeAsync(_sender, _themeDir!, progress);
+        var (ok, message) = await ThemeUploader.PushThemeAsync(_sender, staged, progress);
         _status.Text = message;
         if (!ok)
             MessageBox.Show(message, "Push failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    }
+
+    private const int MaxUploadBytes = 64 * 1024; // firmware fs.begin limit
+
+    /// <summary>
+    /// Builds a temp copy of the theme for upload, resampling each image to
+    /// the pixel size it's actually displayed at. Keeps the local originals
+    /// full-quality while pushed files stay small enough for the device to
+    /// upload (64KB cap) and decode in RAM (w*h*4 bytes when rendered).
+    /// </summary>
+    private string StagePushFolder()
+    {
+        var name = Path.GetFileName(_themeDir!.TrimEnd('\\', '/'));
+        var staging = Path.Combine(Path.GetTempPath(), "minidisp_push", name);
+        if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true);
+        Directory.CreateDirectory(staging);
+        File.Copy(Path.Combine(_themeDir, "theme.json"), Path.Combine(staging, "theme.json"));
+
+        var screen = _canvas.ScreenSize;
+
+        // Largest displayed width (px) per image file across all pages.
+        var targetWidths = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var page in _doc.Pages)
+            foreach (var w in page.Widgets)
+            {
+                if (w.Type != "image") continue;
+                var src = w.Src ?? "logo.png";
+                var px = w.W is > 0 ? w.W.Value * screen.Width / 1000 : int.MaxValue;
+                targetWidths[src] = Math.Max(targetWidths.GetValueOrDefault(src), px);
+            }
+
+        foreach (var file in Directory.GetFiles(_themeDir, "*.png"))
+        {
+            var fileName = Path.GetFileName(file);
+            var stagedPath = Path.Combine(staging, fileName);
+            using (var img = Image.FromFile(file))
+            {
+                var targetW = targetWidths.GetValueOrDefault(fileName, int.MaxValue);
+                // Never larger than displayed, never larger than the screen.
+                var scale = Math.Min(1f, Math.Min(
+                    (targetW == int.MaxValue ? screen.Width : targetW) / (float)img.Width,
+                    Math.Min(screen.Width / (float)img.Width, screen.Height / (float)img.Height)));
+                if (scale < 0.999f)
+                {
+                    var newW = Math.Max(1, (int)(img.Width * scale));
+                    var newH = Math.Max(1, (int)(img.Height * scale));
+                    using var resized = new Bitmap(newW, newH);
+                    using (var g = Graphics.FromImage(resized))
+                    {
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        g.DrawImage(img, new Rectangle(0, 0, newW, newH));
+                    }
+                    resized.Save(stagedPath, System.Drawing.Imaging.ImageFormat.Png);
+                }
+                else
+                {
+                    File.Copy(file, stagedPath);
+                }
+            }
+            var size = new FileInfo(stagedPath).Length;
+            if (size > MaxUploadBytes)
+                throw new InvalidOperationException(
+                    $"{fileName} is still {size / 1024}KB after downscaling (device limit is 64KB). " +
+                    "Use a simpler image — photos compress poorly as PNG; flat-color logos work best.");
+        }
+        return staging;
     }
 
     private static string? Prompt(string label, string initial, bool multiline)

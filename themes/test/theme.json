@@ -3,10 +3,10 @@
   "author": "Kino",
   "version": 1,
   "colors": {
-    "bg": "#101418",
+    "bg": "#000040",
     "fg": "#E6E6E6",
-    "accent": "#00C8FF",
-    "accent2": "#7CFC00",
+    "accent": "#FF0000",
+    "accent2": "#FF0000",
     "muted": "#5A6570",
     "warn": "#FF5040"
   },
@@ -30,7 +30,7 @@
         {
           "type": "text",
           "x": 40,
-          "y": 140,
+          "y": 120,
           "bind": "cpu.load",
           "fmt": "{v:.0f}%",
           "size": "xl"
@@ -45,16 +45,65 @@
         },
         {
           "type": "text",
-          "x": 400,
-          "y": 450,
-          "bind": "cpu.load",
+          "x": 140,
+          "y": 410,
+          "bind": "gpu.name",
           "fmt": "{v:.0f}%"
         },
         {
+          "type": "chart",
+          "x": 150,
+          "y": 510,
+          "w": 800,
+          "h": 400,
+          "bind": "gpu.load"
+        },
+        {
           "type": "image",
+          "x": 650,
+          "y": 20,
+          "w": 340,
+          "src": "vvs.png"
+        },
+        {
+          "type": "text",
           "x": 40,
-          "y": 40,
-          "src": "logo.png"
+          "y": 420,
+          "fmt": "{v:.0f}",
+          "text": "GPU",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 130,
+          "y": 50,
+          "bind": "cpu.name",
+          "fmt": "{v:.0f}%"
+        },
+        {
+          "type": "text",
+          "x": 670,
+          "y": 930,
+          "bind": "net.ip",
+          "fmt": "{v:.0f}"
+        },
+        {
+          "type": "arc",
+          "x": 80,
+          "y": 570,
+          "r": 70,
+          "anchor": "mc",
+          "bind": "gpu.load",
+          "thickness": 40,
+          "label": true
+        },
+        {
+          "type": "text",
+          "x": 140,
+          "y": 930,
+          "bind": "host",
+          "fmt": "{v:.0f}"
         }
       ]
     }

@@ -20,7 +20,8 @@ public sealed class PropertyPanel : UserControl
     ];
 
     private static readonly string[] Anchors = ["tl", "tc", "tr", "ml", "mc", "mr", "bl", "bc", "br"];
-    private static readonly string[] Sizes = ["sm", "md", "lg", "xl"];
+    private static readonly string[] Sizes =
+        ["sm", "md", "lg", "xl", "12", "14", "16", "20", "24", "28", "36"];
     private static readonly string[] ColorNames = ["", "fg", "bg", "accent", "accent2", "muted", "warn"];
 
     private readonly TableLayoutPanel _table;
@@ -187,11 +188,16 @@ public sealed class PropertyPanel : UserControl
 
     private void AddCombo(string label, string value, string[] options, Action<string> setter)
     {
-        var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
+        // Editable so numeric sizes ("18") can be typed; snapped by the renderer.
+        var combo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown };
         combo.Items.AddRange(options);
-        combo.SelectedItem = options.Contains(value) ? value : options[0];
-        combo.SelectedIndexChanged += (_, _) =>
-            Commit(() => setter((string)combo.SelectedItem!));
+        combo.Text = value;
+        void CommitCombo()
+        {
+            if (combo.Text.Length > 0) Commit(() => setter(combo.Text));
+        }
+        combo.SelectedIndexChanged += (_, _) => CommitCombo();
+        combo.Leave += (_, _) => CommitCombo();
         AddRow(label, combo);
     }
 

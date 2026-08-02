@@ -49,7 +49,7 @@ Common fields: `type`, `x`, `y`, `anchor`, `color`, plus per-type fields below. 
 
 | type | fields | renders |
 |---|---|---|
-| `text` | `bind`, `fmt`, `size` (`sm`\|`md`\|`lg`\|`xl`), `color` | formatted value. `fmt` example: `"CPU {v:.0f}%"`, `{v}` = raw value/string. Static label: omit `bind`, use `"text": "LABEL"` |
+| `text` | `bind`, `fmt`, `size` (`sm`\|`md`\|`lg`\|`xl` or numeric px `"12"`–`"36"`, snapped to fonts 12/14/16/20/24/28/36), `color` | formatted value. `fmt` example: `"CPU {v:.0f}%"`, `{v}` = raw value/string. Static label: omit `bind`, use `"text": "LABEL"` |
 | `bar` | `bind`, `w`, `h`, `min`, `max`, `color`, `bg` | horizontal bar gauge |
 | `arc` | `bind`, `r`, `thickness`, `min`, `max`, `color`, `bg`, `label` (bool, shows value in center), `size` | radial gauge, 270° sweep |
 | `chart` | `bind`, `w`, `h`, `min`, `max`, `points` (history length, default 60), `autoscale` (bool), `color` | scrolling line chart |
