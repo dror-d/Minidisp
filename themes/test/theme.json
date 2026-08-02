@@ -4,11 +4,11 @@
   "version": 1,
   "colors": {
     "bg": "#000040",
-    "fg": "#E6E6E6",
-    "accent": "#FF0000",
+    "fg": "#FF0000",
+    "accent": "#00FF00",
     "accent2": "#FF0000",
-    "muted": "#5A6570",
-    "warn": "#FF5040"
+    "muted": "#FF8040",
+    "warn": "#FF8040"
   },
   "warnAbove": {
     "cpu.load": 95,
@@ -104,6 +104,18 @@
           "y": 30,
           "w": 240,
           "src": "vvs.png"
+        }
+      ]
+    },
+    {
+      "name": "Page 2",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 30,
+          "y": 80,
+          "bind": "net.if",
+          "fmt": "{v:.0f}"
         }
       ]
     }
