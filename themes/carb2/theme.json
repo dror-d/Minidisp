@@ -1,0 +1,235 @@
+{
+  "name": "Carbon",
+  "author": "VVS",
+  "version": 1,
+  "colors": {
+    "bg": "#101418",
+    "fg": "#E6E6E6",
+    "accent": "#00C8FF",
+    "accent2": "#7CFC00",
+    "muted": "#5A6570",
+    "warn": "#FF5040"
+  },
+  "warnAbove": {
+    "cpu.load": 95,
+    "cpu.temp": 85,
+    "mem.pct": 90
+  },
+  "pages": [
+    {
+      "name": "Overview",
+      "widgets": [
+        {
+          "type": "image",
+          "x": 25,
+          "y": 25,
+          "w": 170,
+          "src": "logo.png"
+        },
+        {
+          "type": "text",
+          "x": 975,
+          "y": 40,
+          "anchor": "tr",
+          "bind": "host",
+          "fmt": "{v}",
+          "size": "md"
+        },
+        {
+          "type": "text",
+          "x": 975,
+          "y": 130,
+          "anchor": "tr",
+          "bind": "uptime",
+          "fmt": "{v}",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 225,
+          "text": "CPU",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 285,
+          "bind": "cpu.load",
+          "fmt": "{v:.0f}%",
+          "size": "xl"
+        },
+        {
+          "type": "text",
+          "x": 480,
+          "y": 300,
+          "anchor": "tr",
+          "bind": "cpu.temp",
+          "fmt": "{v:.0f}\u00B0C",
+          "size": "md",
+          "color": "accent2"
+        },
+        {
+          "type": "bar",
+          "x": 40,
+          "y": 430,
+          "w": 440,
+          "h": 50,
+          "bind": "cpu.load"
+        },
+        {
+          "type": "text",
+          "x": 540,
+          "y": 225,
+          "text": "RAM",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 540,
+          "y": 285,
+          "bind": "mem.pct",
+          "fmt": "{v:.0f}%",
+          "size": "xl"
+        },
+        {
+          "type": "text",
+          "x": 960,
+          "y": 300,
+          "anchor": "tr",
+          "bind": "mem.used",
+          "fmt": "{v:.1f} GB",
+          "size": "md",
+          "color": "accent2"
+        },
+        {
+          "type": "bar",
+          "x": 540,
+          "y": 430,
+          "w": 420,
+          "h": 50,
+          "bind": "mem.pct",
+          "color": "accent2"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 550,
+          "text": "NET",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 620,
+          "bind": "net.down",
+          "fmt": "DN {v:.1f} Mbps",
+          "size": "md",
+          "color": "accent"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 710,
+          "bind": "net.up",
+          "fmt": "UP {v:.1f} Mbps",
+          "size": "md",
+          "color": "accent2"
+        },
+        {
+          "type": "chart",
+          "x": 520,
+          "y": 550,
+          "w": 440,
+          "h": 260,
+          "bind": "net.down",
+          "points": 60,
+          "autoscale": true
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 890,
+          "bind": "net.ip",
+          "fmt": "IP {v}",
+          "size": "sm"
+        },
+        {
+          "type": "text",
+          "x": 960,
+          "y": 890,
+          "anchor": "tr",
+          "bind": "disk.pct",
+          "fmt": "C: {v:.0f}%",
+          "size": "sm"
+        }
+      ]
+    },
+    {
+      "name": "Details",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 500,
+          "y": 50,
+          "anchor": "tc",
+          "bind": "host",
+          "fmt": "{v}",
+          "size": "lg"
+        },
+        {
+          "type": "text",
+          "x": 500,
+          "y": 180,
+          "anchor": "tc",
+          "bind": "cpu.name",
+          "fmt": "{v}",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "chart",
+          "x": 60,
+          "y": 290,
+          "w": 880,
+          "h": 400,
+          "bind": "cpu.load",
+          "min": 0,
+          "max": 100,
+          "points": 90
+        },
+        {
+          "type": "text",
+          "x": 60,
+          "y": 770,
+          "bind": "gpu.load",
+          "fmt": "GPU {v:.0f}%",
+          "size": "md"
+        },
+        {
+          "type": "text",
+          "x": 420,
+          "y": 770,
+          "bind": "gpu.temp",
+          "fmt": "{v:.0f}\u00B0C",
+          "size": "md",
+          "color": "accent2"
+        },
+        {
+          "type": "text",
+          "x": 940,
+          "y": 890,
+          "anchor": "tr",
+          "bind": "uptime",
+          "fmt": "UP {v}",
+          "size": "sm",
+          "color": "muted"
+        }
+      ]
+    }
+  ]
+}

@@ -91,8 +91,40 @@ void update(JsonObjectConst o) {
         for (; i < kMaxDisks; i++) s_snap.disk[i].valid = false;
     }
 
+    JsonObjectConst custom = o["custom"];
+    if (!custom.isNull()) {
+        int i = 0;
+        for (JsonPairConst kv : custom) {
+            if (i >= kMaxCustom) break;
+            CustomVal& c = s_snap.custom[i];
+            strlcpy(c.key, kv.key().c_str(), sizeof(c.key));
+            JsonVariantConst v = kv.value();
+            if (v.is<float>()) {
+                c.num = v.as<float>();
+                c.isNum = true;
+                snprintf(c.text, sizeof(c.text), "%g", (double)c.num);
+            } else {
+                c.isNum = false;
+                const char* s = v.as<const char*>();
+                strlcpy(c.text, s ? s : "", sizeof(c.text));
+            }
+            c.valid = true;
+            i++;
+        }
+        for (; i < kMaxCustom; i++) s_snap.custom[i].valid = false;
+    }
+
     s_lastUpdateMs = millis();
     s_ever = true;
+}
+
+const CustomVal* findCustom(const char* path) {
+    for (int i = 0; i < kMaxCustom; i++) {
+        if (s_snap.custom[i].valid && !strcmp(s_snap.custom[i].key, path)) {
+            return &s_snap.custom[i];
+        }
+    }
+    return nullptr;
 }
 
 bool isFresh(uint32_t timeoutMs) {
@@ -153,6 +185,9 @@ bool getNumber(const char* path, float& out) {
         if (!strcmp(field, "free")) { out = s_snap.disk[idx].freeGb; return true; }
         return false;
     }
+    if (const CustomVal* c = findCustom(path)) {
+        if (c->isNum) { out = c->num; return true; }
+    }
     return false;
 }
 
@@ -201,6 +236,11 @@ bool getText(const char* path, char* buf, size_t bufLen) {
         snprintf(buf, bufLen, "%lud %02lu:%02lu", (unsigned long)(s / 86400),
                  (unsigned long)((s / 3600) % 24), (unsigned long)((s / 60) % 60));
         return s_snap.uptime > 0;
+    }
+
+    if (const CustomVal* c = findCustom(path)) {
+        strlcpy(buf, c->text, bufLen);
+        return true;
     }
 
     // Fall back to numeric lookup, rendered with one decimal.

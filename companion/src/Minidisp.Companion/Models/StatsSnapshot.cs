@@ -19,6 +19,13 @@ public sealed class StatsSnapshot
     [JsonPropertyName("net")] public List<NetStats>? Net { get; set; }
     [JsonPropertyName("disk")] public List<DiskStats>? Disk { get; set; }
 
+    /// <summary>
+    /// User-defined values (from XML &lt;value id="..."&gt; elements) that themes
+    /// can bind to by key — e.g. data published by another application.
+    /// Values are double (numeric) or string.
+    /// </summary>
+    [JsonPropertyName("custom")] public Dictionary<string, object>? Custom { get; set; }
+
     /// <summary>Serializes as a single protocol line: {"stats":{...}}.</summary>
     public string ToProtocolLine()
     {

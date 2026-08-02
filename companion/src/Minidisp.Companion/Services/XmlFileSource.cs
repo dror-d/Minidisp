@@ -178,6 +178,20 @@ public sealed class XmlFileSource : ISensorSource
             .ToList();
         if (disks.Count > 0) snap.Disk = disks;
 
+        // <value id="myapp.status">Running</value> — arbitrary user data that
+        // themes bind to by id (numbers stay numeric, everything else string).
+        var custom = new Dictionary<string, object>();
+        foreach (var v in root.Descendants("value"))
+        {
+            var id = (string?)v.Attribute("id");
+            if (string.IsNullOrWhiteSpace(id)) continue;
+            var text = v.Value.Trim();
+            custom[id] = double.TryParse(text,
+                System.Globalization.CultureInfo.InvariantCulture, out var num)
+                ? num : text;
+        }
+        if (custom.Count > 0) snap.Custom = custom;
+
         return snap;
     }
 

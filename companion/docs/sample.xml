@@ -10,4 +10,10 @@
   <gpu load="17" temp="48" name="RTX 3070" />
   <net if="Ethernet" ip="192.168.1.10" up="1.2" down="34.5" />
   <disk n="C:" pct="75" free="250.1" />
+
+  <!-- Custom values: any id you like, bind themes to it directly
+       (e.g. a text widget with bind="myapp.status"). Numbers can also
+       drive bars/arcs/charts. -->
+  <value id="myapp.status">Running</value>
+  <value id="myapp.queue">17</value>
 </minidisp>

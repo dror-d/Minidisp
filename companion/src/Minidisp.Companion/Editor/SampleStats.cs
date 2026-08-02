@@ -49,6 +49,13 @@ public sealed class SampleStats : IStatsProvider
             text = v.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
             return true;
         }
+        // Unknown path — likely a custom XML bind. Show a placeholder so the
+        // preview makes the binding visible instead of rendering "--".
+        if (path.Length > 0)
+        {
+            text = $"[{path}]";
+            return true;
+        }
         text = "";
         return false;
     }
@@ -63,6 +70,11 @@ public sealed class SnapshotStats(StatsSnapshot snap) : IStatsProvider
     public bool TryGetNumber(string path, out float value)
     {
         value = 0;
+        if (snap.Custom?.TryGetValue(path, out var custom) == true)
+        {
+            if (custom is double d) { value = (float)d; return true; }
+            return false;
+        }
         float? v = path switch
         {
             "cpu.load" => snap.Cpu?.Load,
@@ -106,6 +118,15 @@ public sealed class SnapshotStats(StatsSnapshot snap) : IStatsProvider
     public bool TryGetText(string path, out string text)
     {
         text = "";
+        if (snap.Custom?.TryGetValue(path, out var custom) == true)
+        {
+            text = custom switch
+            {
+                double d => d.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
+                _ => custom?.ToString() ?? "",
+            };
+            return true;
+        }
         var (group, index, field) = Split(path);
         string? s = (group, field) switch
         {

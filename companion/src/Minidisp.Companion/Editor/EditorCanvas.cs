@@ -25,6 +25,8 @@ public sealed class EditorCanvas : Control
     public event EventHandler? DocumentEdited;
     /// <summary>Raised before an interactive mutation starts (undo snapshot hook).</summary>
     public event EventHandler? BeforeEdit;
+    /// <summary>Raised when a widget is double-clicked (edit-in-place trigger).</summary>
+    public event EventHandler<ThemeWidget>? WidgetActivated;
 
     private float _zoom = 1;
     private Point _origin;
@@ -118,6 +120,14 @@ public sealed class EditorCanvas : Control
     private static Rectangle ResizeHandlePx(Rectangle bounds) =>
         new(bounds.Right - 4, bounds.Bottom - 4, 9, 9);
 
+    /// <summary>Client pixel position → per-mille screen coordinates.</summary>
+    public Point PmAt(Point clientPx)
+    {
+        var x = (int)((clientPx.X - _origin.X) / _zoom * 1000 / Math.Max(1, ScreenSize.Width));
+        var y = (int)((clientPx.Y - _origin.Y) / _zoom * 1000 / Math.Max(1, ScreenSize.Height));
+        return new Point(Math.Clamp(x, 0, 1000), Math.Clamp(y, 0, 1000));
+    }
+
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
@@ -125,7 +135,7 @@ public sealed class EditorCanvas : Control
         if (Document is null || PageIndex >= Document.Pages.Count) return;
         var widgets = Document.Pages[PageIndex].Widgets;
 
-        if (SelectedWidget is { } sel && IsResizable(sel) &&
+        if (e.Button == MouseButtons.Left && SelectedWidget is { } sel && IsResizable(sel) &&
             ResizeHandlePx(WidgetBoundsPx(sel)).Contains(e.Location))
         {
             StartDrag(e.Location, resizing: true);
@@ -139,11 +149,19 @@ public sealed class EditorCanvas : Control
             if (bounds.Contains(e.Location))
             {
                 Select(i);
-                StartDrag(e.Location, resizing: false);
+                if (e.Button == MouseButtons.Left) StartDrag(e.Location, resizing: false);
                 return;
             }
         }
         Select(-1);
+    }
+
+    protected override void OnMouseDoubleClick(MouseEventArgs e)
+    {
+        base.OnMouseDoubleClick(e);
+        _dragging = _resizing = _moved = false;
+        if (e.Button == MouseButtons.Left && SelectedWidget is { } w)
+            WidgetActivated?.Invoke(this, w);
     }
 
     private void StartDrag(Point at, bool resizing)

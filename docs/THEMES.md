@@ -45,7 +45,7 @@ All positions/sizes are **per-mille (0–1000) of the screen**, so one theme ren
 
 ## Widgets
 
-Common fields: `type`, `x`, `y`, `anchor`, `color`, plus per-type fields below. `bind` is a data path from PROTOCOL.md (e.g. `cpu.load`, `net.ip`, `disk1.pct`).
+Common fields: `type`, `x`, `y`, `anchor`, `color`, plus per-type fields below. `bind` is a data path from PROTOCOL.md (e.g. `cpu.load`, `net.ip`, `disk1.pct`) — or any **custom value id** supplied via the XML source's `<value id="...">` elements (e.g. `myapp.status`), letting themes show data from other applications.
 
 | type | fields | renders |
 |---|---|---|

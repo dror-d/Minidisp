@@ -9,6 +9,7 @@ namespace stats {
 constexpr int kMaxCores = 32;
 constexpr int kMaxNets = 4;
 constexpr int kMaxDisks = 4;
+constexpr int kMaxCustom = 16;
 
 struct NetIf {
     char name[24];
@@ -20,6 +21,16 @@ struct NetIf {
 struct DiskInfo {
     char name[16];
     float pct = 0, freeGb = 0;
+    bool valid = false;
+};
+
+// User-defined values from the PC's "custom" map — lets themes bind to data
+// from any application (e.g. an auto-updating XML file), not just sensors.
+struct CustomVal {
+    char key[28];
+    char text[32];
+    float num = 0;
+    bool isNum = false;
     bool valid = false;
 };
 
@@ -35,6 +46,7 @@ struct Snapshot {
     float gpuLoad = -1, gpuTemp = -1;
     NetIf net[kMaxNets];
     DiskInfo disk[kMaxDisks];
+    CustomVal custom[kMaxCustom];
 };
 
 // Merge a parsed {"stats":{...}} object into the snapshot.

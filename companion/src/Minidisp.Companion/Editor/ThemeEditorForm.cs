@@ -61,6 +61,8 @@ public sealed class ThemeEditorForm : Form
         Controls.Add(BuildStatusBar());
 
         _canvas.Document = _doc;
+        _canvas.WidgetActivated += (_, w) => ActivateWidget(w);
+        _canvas.ContextMenuStrip = BuildCanvasMenu();
         _canvas.SelectionChanged += (_, _) => _props.ShowWidget(_canvas.SelectedWidget, _doc);
         _canvas.BeforeEdit += (_, _) => PushUndo();
         _canvas.DocumentEdited += (_, _) =>
@@ -328,7 +330,7 @@ public sealed class ThemeEditorForm : Form
     private List<ThemeWidget>? CurrentWidgets =>
         _canvas.PageIndex < _doc.Pages.Count ? _doc.Pages[_canvas.PageIndex].Widgets : null;
 
-    private void AddWidget(string type)
+    private void AddWidget(string type, Point? positionPm = null)
     {
         if (CurrentWidgets is not { } widgets) return;
         PushUndo();
@@ -341,10 +343,157 @@ public sealed class ThemeEditorForm : Form
             "rect" => new ThemeWidget { Type = "rect", X = 100, Y = 100, W = 300, H = 200 },
             _ => new ThemeWidget { Type = "text", X = 400, Y = 450, Bind = "cpu.load", Fmt = "{v:.0f}%" },
         };
+        if (positionPm is { } p)
+        {
+            widget.X = p.X;
+            widget.Y = p.Y;
+        }
         widgets.Add(widget);
         MarkDirty();
         _canvas.Select(widgets.Count - 1);
         _canvas.Invalidate();
+        // Adding a text/image is usually followed by editing it — open the editor.
+        if (type is "text" or "image") ActivateWidget(widget);
+    }
+
+    // ---- in-place editing (double-click / context menu) -------------------
+
+    private void ActivateWidget(ThemeWidget w)
+    {
+        switch (w.Type)
+        {
+            case "text": EditTextWidget(w); break;
+            case "image": ChooseImage(w); break;
+            default: EditBind(w); break;
+        }
+    }
+
+    private void EditTextWidget(ThemeWidget w)
+    {
+        if (string.IsNullOrEmpty(w.Bind))
+        {
+            var text = Prompt("Text to display (static — or set a Bind in the panel for live values):",
+                w.Text ?? "", multiline: false);
+            if (text is null) return;
+            PushUndo();
+            w.Text = text;
+        }
+        else
+        {
+            var fmt = Prompt($"Format for '{w.Bind}' — {{v}} inserts the value, {{v:.1f}} with decimals:",
+                w.Fmt ?? "{v:.0f}", multiline: false);
+            if (fmt is null) return;
+            PushUndo();
+            w.Fmt = string.IsNullOrWhiteSpace(fmt) ? null : fmt;
+        }
+        MarkDirty();
+        _canvas.Invalidate();
+        _props.ShowWidget(_canvas.SelectedWidget, _doc);
+    }
+
+    private void EditBind(ThemeWidget w)
+    {
+        var bind = Prompt(
+            "Data bind path (sensor path like cpu.load, or a custom XML value id):",
+            w.Bind ?? "", multiline: false);
+        if (bind is null) return;
+        PushUndo();
+        w.Bind = string.IsNullOrWhiteSpace(bind) ? null : bind.Trim();
+        MarkDirty();
+        _canvas.Invalidate();
+        _props.ShowWidget(_canvas.SelectedWidget, _doc);
+    }
+
+    private void ChooseImage(ThemeWidget w)
+    {
+        if (_themeDir is null)
+        {
+            MessageBox.Show("Save the theme first — images are copied into the theme's folder.",
+                "Minidisp", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!SaveTheme(saveAs: true)) return;
+        }
+        using var dialog = new OpenFileDialog
+        {
+            Title = "Choose a PNG image",
+            Filter = "PNG images (*.png)|*.png",
+        };
+        if (dialog.ShowDialog() != DialogResult.OK) return;
+        var fileName = Path.GetFileName(dialog.FileName);
+        var target = Path.Combine(_themeDir!, fileName);
+        if (!string.Equals(dialog.FileName, target, StringComparison.OrdinalIgnoreCase))
+            File.Copy(dialog.FileName, target, overwrite: true);
+        PushUndo();
+        w.Src = fileName;
+        WidgetRenderer.ClearImageCache();
+        MarkDirty();
+        _canvas.Invalidate();
+        _props.ShowWidget(_canvas.SelectedWidget, _doc);
+    }
+
+    private void DuplicateSelected()
+    {
+        if (CurrentWidgets is not { } widgets || _canvas.SelectedWidget is not { } w) return;
+        PushUndo();
+        var copy = System.Text.Json.JsonSerializer.Deserialize<ThemeWidget>(
+            System.Text.Json.JsonSerializer.Serialize(w, ThemeDocument.JsonOptions),
+            ThemeDocument.JsonOptions)!;
+        copy.X = Math.Min(1000, copy.X + 25);
+        copy.Y = Math.Min(1000, copy.Y + 25);
+        widgets.Add(copy);
+        MarkDirty();
+        _canvas.Select(widgets.Count - 1);
+        _canvas.Invalidate();
+    }
+
+    private void Reorder(bool toFront)
+    {
+        if (CurrentWidgets is not { } widgets || _canvas.SelectedIndex < 0) return;
+        PushUndo();
+        var w = widgets[_canvas.SelectedIndex];
+        widgets.RemoveAt(_canvas.SelectedIndex);
+        if (toFront) widgets.Add(w);
+        else widgets.Insert(0, w);
+        MarkDirty();
+        _canvas.Select(toFront ? widgets.Count - 1 : 0);
+        _canvas.Invalidate();
+    }
+
+    private ContextMenuStrip BuildCanvasMenu()
+    {
+        var menu = new ContextMenuStrip();
+        var editText = new ToolStripMenuItem("Edit text...", null, (_, _) =>
+        { if (_canvas.SelectedWidget is { } w) EditTextWidget(w); });
+        var chooseImage = new ToolStripMenuItem("Choose image...", null, (_, _) =>
+        { if (_canvas.SelectedWidget is { } w) ChooseImage(w); });
+        var editBind = new ToolStripMenuItem("Edit data bind...", null, (_, _) =>
+        { if (_canvas.SelectedWidget is { } w) EditBind(w); });
+        var duplicate = new ToolStripMenuItem("Duplicate", null, (_, _) => DuplicateSelected());
+        var front = new ToolStripMenuItem("Bring to front", null, (_, _) => Reorder(toFront: true));
+        var back = new ToolStripMenuItem("Send to back", null, (_, _) => Reorder(toFront: false));
+        var delete = new ToolStripMenuItem("Delete", null, (_, _) => DeleteSelected());
+
+        var addMenu = new ToolStripMenuItem("Add widget");
+        Point addAt = default;
+        foreach (var type in new[] { "text", "bar", "arc", "chart", "image", "rect" })
+            addMenu.DropDownItems.Add(new ToolStripMenuItem(type, null,
+                (_, _) => AddWidget(type, addAt)));
+
+        var widgetSeparator = new ToolStripSeparator();
+        menu.Items.AddRange([editText, chooseImage, editBind, widgetSeparator,
+            duplicate, front, back, delete, addMenu]);
+
+        menu.Opening += (_, _) =>
+        {
+            addAt = _canvas.PmAt(_canvas.PointToClient(Cursor.Position));
+            var w = _canvas.SelectedWidget;
+            editText.Visible = w?.Type == "text";
+            chooseImage.Visible = w?.Type == "image";
+            editBind.Visible = w is not null && w.Type is "bar" or "arc" or "chart" or "text";
+            widgetSeparator.Visible = duplicate.Visible = front.Visible =
+                back.Visible = delete.Visible = w is not null;
+            addMenu.Visible = w is null;
+        };
+        return menu;
     }
 
     private void DeleteSelected()

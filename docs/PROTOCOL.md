@@ -36,11 +36,17 @@ All fields optional — the firmware renders what it receives, widgets bound to 
   "mem":{"pct":61.2,"used":9.8,"total":16.0},
   "gpu":{"load":17.0,"temp":48.0,"name":"RTX 3070"},
   "net":[{"if":"Ethernet","ip":"192.168.1.10","up":1.2,"down":34.5}],
-  "disk":[{"n":"C:","pct":75.0,"free":250.1}]
+  "disk":[{"n":"C:","pct":75.0,"free":250.1}],
+  "custom":{"myapp.status":"Running","myapp.queue":17}
 }}
 ```
 
 Units: temps °C, mem/disk free GB, net rates Mbit/s, uptime seconds, loads/pct 0–100.
+
+`custom` (optional, max 16 keys) carries arbitrary user data — e.g. values
+another application writes into the watched XML file. Themes bind to the key
+directly (`"bind":"myapp.status"`); numeric values work in bars/arcs/charts,
+strings in text widgets. Keys ≤ 27 chars, string values ≤ 31 chars.
 
 ### Commands
 
