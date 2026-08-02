@@ -63,9 +63,14 @@ public sealed class ThemeEditorForm : Form
             BackColor = Color.FromArgb(240, 242, 245),
             ForeColor = Color.FromArgb(70, 80, 90),
         });
-        // SplitterDistance can only be set reliably once the control has its
-        // real size — setting it in the constructor collapsed the panel.
-        Load += (_, _) => split.SplitterDistance = Math.Max(300, split.Width - 320);
+        // SplitterDistance is only valid once the control has its real size,
+        // and must stay within [Panel1MinSize, Width - Panel2MinSize].
+        Shown += (_, _) =>
+        {
+            var max = split.Width - split.Panel2MinSize;
+            if (max > split.Panel1MinSize)
+                split.SplitterDistance = Math.Clamp(split.Width - 320, split.Panel1MinSize, max);
+        };
 
         Controls.Add(split);
         Controls.Add(BuildToolbar());
