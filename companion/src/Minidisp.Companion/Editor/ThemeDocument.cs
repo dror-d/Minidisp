@@ -33,6 +33,8 @@ public sealed class ThemeDocument
     [JsonPropertyName("name")] public string Name { get; set; } = "Untitled";
     [JsonPropertyName("author")] public string? Author { get; set; }
     [JsonPropertyName("version")] public int Version { get; set; } = 1;
+    /// <summary>"portrait" rotates the device panel; null/"landscape" is default.</summary>
+    [JsonPropertyName("orientation")] public string? Orientation { get; set; }
     [JsonPropertyName("colors")] public Dictionary<string, string> Colors { get; set; } = new();
     [JsonPropertyName("warnAbove")] public Dictionary<string, float>? WarnAbove { get; set; }
     [JsonPropertyName("pages")] public List<ThemePage> Pages { get; set; } = [];

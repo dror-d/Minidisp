@@ -112,6 +112,15 @@ lv_obj_t* loadTheme(const char* name) {
     JsonDocument doc;
     if (deserializeJson(doc, buf.get())) return nullptr;
 
+    // Apply the theme's orientation before measuring the screen: rotate the
+    // panel and tell LVGL the new resolution (buffer size is unchanged —
+    // rotation only swaps width/height).
+    const char* orientation = doc["orientation"] | "landscape";
+    hal::setOrientation(!strcmp(orientation, "portrait"));
+    if (lv_display_t* d = lv_display_get_default()) {
+        lv_display_set_resolution(d, hal::width(), hal::height());
+    }
+
     widgets::ThemeCtx ctx;
     JsonObjectConst colors = doc["colors"];
     ctx.bg = colorOr(colors["bg"], 0x101418);

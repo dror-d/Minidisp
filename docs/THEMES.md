@@ -39,6 +39,7 @@ All positions/sizes are **per-mille (0–1000) of the screen**, so one theme ren
 }
 ```
 
+- `orientation` (optional): `"portrait"` rotates the device's panel when the theme loads; default is landscape. The editor sets this automatically from the canvas size you design at.
 - `colors`: named palette. Any widget `color`/`bg` field may reference a palette name (`"accent"`) or a literal `"#RRGGBB"`.
 - `warnAbove`: when a bound value exceeds the threshold, bar/arc/text widgets bound to it switch to the `warn` color.
 - Multiple `pages`: tap the screen to cycle pages; long-press cycles themes.

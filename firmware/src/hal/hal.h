@@ -24,6 +24,9 @@ bool readTouch(uint16_t& x, uint16_t& y);
 // pct 0-100
 void setBrightness(uint8_t pct);
 
+// Rotate the panel for the theme's orientation (touch follows automatically).
+void setOrientation(bool portrait);
+
 const char* boardName();
 
 } // namespace hal

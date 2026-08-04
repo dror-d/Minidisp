@@ -112,8 +112,6 @@ public sealed class ThemeEditorForm : Form
         file.DropDownItems.Add("&Save", null, (_, _) => SaveTheme(saveAs: false));
         file.DropDownItems.Add("Save &As...", null, (_, _) => SaveTheme(saveAs: true));
         file.DropDownItems.Add(new ToolStripSeparator());
-        file.DropDownItems.Add("Import &Logo...", null, (_, _) => ImportLogo());
-        file.DropDownItems.Add(new ToolStripSeparator());
         var push = new ToolStripMenuItem("&Push to Device", null, async (_, _) => await PushToDevice())
         {
             Enabled = _sender is not null,
@@ -130,6 +128,13 @@ public sealed class ThemeEditorForm : Form
         theme.DropDownItems.Add(palette);
         theme.DropDownItems.Add("&Warn thresholds...", null, (_, _) => EditWarnRules());
         theme.DropDownItems.Add("&Rename theme...", null, (_, _) => RenameTheme());
+        var logoItem = new ToolStripMenuItem("Set Theme &Logo (logo.png)...", null,
+            (_, _) => ImportLogo())
+        {
+            ToolTipText = "Replaces this theme's logo.png — the default picture " +
+                          "shown by image widgets that don't name another file.",
+        };
+        theme.DropDownItems.Add(logoItem);
 
         var view = new ToolStripMenuItem("&View");
         _snapMenuItem = new ToolStripMenuItem("Snap to grid") { Checked = true, CheckOnClick = true };
@@ -171,6 +176,10 @@ public sealed class ThemeEditorForm : Form
         bar.Items.Add(_pageCombo);
         bar.Items.Add(new ToolStripButton("+", null, (_, _) => AddPage()) { ToolTipText = "Add page" });
         bar.Items.Add(new ToolStripButton("−", null, (_, _) => RemovePage()) { ToolTipText = "Remove page" });
+        bar.Items.Add(new ToolStripButton("Rename", null, (_, _) => RenamePage())
+        { ToolTipText = "Rename this page" });
+        bar.Items.Add(new ToolStripButton("Duplicate", null, (_, _) => DuplicatePage())
+        { ToolTipText = "Duplicate this page with all its widgets" });
         bar.Items.Add(new ToolStripSeparator());
 
         bar.Items.Add(new ToolStripLabel("Add:"));
@@ -284,10 +293,24 @@ public sealed class ThemeEditorForm : Form
         _canvas.Document = _doc;
         _canvas.PageIndex = 0;
         _canvas.Select(-1);
+        ApplyThemeOrientation();
         RefreshPages();
         UpdateTitle();
         _canvas.Invalidate();
         _status.Text = $"Opened {dialog.FileName}";
+    }
+
+    /// <summary>Flips the canvas to match the opened theme's orientation.</summary>
+    private void ApplyThemeOrientation()
+    {
+        var portrait = _doc.Orientation == "portrait";
+        var s = _canvas.ScreenSize;
+        if (portrait == s.Height > s.Width) return;
+        var swapped = new Size(s.Height, s.Width);
+        // Prefer a matching preset so the toolbar reflects reality.
+        var index = Array.FindIndex(DeviceSizes, d => d.W == swapped.Width && d.H == swapped.Height);
+        if (index >= 0) _sizeCombo.SelectedIndex = index; // handler updates canvas
+        else _canvas.ScreenSize = swapped;
     }
 
     private bool SaveTheme(bool saveAs)
@@ -304,6 +327,10 @@ public sealed class ThemeEditorForm : Form
             _themeDir = Path.GetDirectoryName(dialog.FileName);
             WidgetRenderer.ThemeDir = _themeDir;
         }
+        // Orientation follows the canvas: a taller-than-wide design means the
+        // device should rotate its panel to portrait when loading this theme.
+        _doc.Orientation =
+            _canvas.ScreenSize.Height > _canvas.ScreenSize.Width ? "portrait" : null;
         try
         {
             _doc.Save(Path.Combine(_themeDir!, "theme.json"));
@@ -467,6 +494,37 @@ public sealed class ThemeEditorForm : Form
         }
     }
 
+    private static string? s_widgetClipboard;
+
+    private void CopySelected()
+    {
+        if (_canvas.SelectedWidget is not { } w) return;
+        s_widgetClipboard = System.Text.Json.JsonSerializer.Serialize(w, ThemeDocument.JsonOptions);
+        _status.Text = $"Copied {w.Type} widget";
+    }
+
+    private void PasteWidget(Point? positionPm = null)
+    {
+        if (s_widgetClipboard is null || CurrentWidgets is not { } widgets) return;
+        var w = System.Text.Json.JsonSerializer.Deserialize<ThemeWidget>(
+            s_widgetClipboard, ThemeDocument.JsonOptions);
+        if (w is null) return;
+        PushUndo();
+        if (positionPm is { } p)
+        {
+            (w.X, w.Y) = (p.X, p.Y);
+        }
+        else
+        {
+            w.X = Math.Min(1000, w.X + 25);
+            w.Y = Math.Min(1000, w.Y + 25);
+        }
+        widgets.Add(w);
+        MarkDirty();
+        _canvas.Select(widgets.Count - 1);
+        _canvas.Invalidate();
+    }
+
     private void DuplicateSelected()
     {
         if (CurrentWidgets is not { } widgets || _canvas.SelectedWidget is not { } w) return;
@@ -505,6 +563,7 @@ public sealed class ThemeEditorForm : Form
         var editBind = new ToolStripMenuItem("Edit data bind...", null, (_, _) =>
         { if (_canvas.SelectedWidget is { } w) EditBind(w); });
         var duplicate = new ToolStripMenuItem("Duplicate", null, (_, _) => DuplicateSelected());
+        var copy = new ToolStripMenuItem("Copy\tCtrl+C", null, (_, _) => CopySelected());
         var front = new ToolStripMenuItem("Bring to front", null, (_, _) => Reorder(toFront: true));
         var back = new ToolStripMenuItem("Send to back", null, (_, _) => Reorder(toFront: false));
         var delete = new ToolStripMenuItem("Delete", null, (_, _) => DeleteSelected());
@@ -514,10 +573,11 @@ public sealed class ThemeEditorForm : Form
         foreach (var type in new[] { "text", "bar", "arc", "chart", "image", "rect" })
             addMenu.DropDownItems.Add(new ToolStripMenuItem(type, null,
                 (_, _) => AddWidget(type, addAt)));
+        var paste = new ToolStripMenuItem("Paste\tCtrl+V", null, (_, _) => PasteWidget(addAt));
 
         var widgetSeparator = new ToolStripSeparator();
         menu.Items.AddRange([editText, chooseImage, editBind, widgetSeparator,
-            duplicate, front, back, delete, addMenu]);
+            copy, duplicate, front, back, delete, addMenu, paste]);
 
         menu.Opening += (_, _) =>
         {
@@ -526,9 +586,10 @@ public sealed class ThemeEditorForm : Form
             editText.Visible = w?.Type == "text";
             chooseImage.Visible = w?.Type == "image";
             editBind.Visible = w is not null && w.Type is "bar" or "arc" or "chart" or "text";
-            widgetSeparator.Visible = duplicate.Visible = front.Visible =
+            widgetSeparator.Visible = copy.Visible = duplicate.Visible = front.Visible =
                 back.Visible = delete.Visible = w is not null;
             addMenu.Visible = w is null;
+            paste.Visible = w is null && s_widgetClipboard is not null;
         };
         return menu;
     }
@@ -549,6 +610,34 @@ public sealed class ThemeEditorForm : Form
         _doc.Pages.Add(new ThemePage { Name = $"Page {_doc.Pages.Count + 1}" });
         MarkDirty();
         _canvas.PageIndex = _doc.Pages.Count - 1;
+        RefreshPages();
+        _canvas.Invalidate();
+    }
+
+    private void RenamePage()
+    {
+        if (_canvas.PageIndex >= _doc.Pages.Count) return;
+        var page = _doc.Pages[_canvas.PageIndex];
+        var name = Prompt("Page name:", page.Name ?? $"Page {_canvas.PageIndex + 1}", multiline: false);
+        if (string.IsNullOrWhiteSpace(name)) return;
+        PushUndo();
+        page.Name = name.Trim();
+        MarkDirty();
+        RefreshPages();
+    }
+
+    private void DuplicatePage()
+    {
+        if (_canvas.PageIndex >= _doc.Pages.Count) return;
+        PushUndo();
+        var source = _doc.Pages[_canvas.PageIndex];
+        var copy = System.Text.Json.JsonSerializer.Deserialize<ThemePage>(
+            System.Text.Json.JsonSerializer.Serialize(source, ThemeDocument.JsonOptions),
+            ThemeDocument.JsonOptions)!;
+        copy.Name = $"{source.Name ?? "Page"} copy";
+        _doc.Pages.Insert(_canvas.PageIndex + 1, copy);
+        MarkDirty();
+        _canvas.PageIndex++;
         RefreshPages();
         _canvas.Invalidate();
     }
@@ -613,9 +702,13 @@ public sealed class ThemeEditorForm : Form
 
     private void OnKey(object? sender, KeyEventArgs e)
     {
+        if (e.Control && e.KeyCode == Keys.S) { SaveTheme(saveAs: false); e.Handled = true; return; }
+        // Canvas-only shortcuts — don't hijack Ctrl+C/V/Z from text fields.
+        if (!_canvas.Focused) return;
         if (e.Control && e.KeyCode == Keys.Z) { Undo(); e.Handled = true; }
-        else if (e.KeyCode == Keys.Delete && !_props.ContainsFocus) { DeleteSelected(); e.Handled = true; }
-        else if (e.Control && e.KeyCode == Keys.S) { SaveTheme(saveAs: false); e.Handled = true; }
+        else if (e.Control && e.KeyCode == Keys.C) { CopySelected(); e.Handled = true; }
+        else if (e.Control && e.KeyCode == Keys.V) { PasteWidget(); e.Handled = true; }
+        else if (e.KeyCode == Keys.Delete) { DeleteSelected(); e.Handled = true; }
     }
 
     // ---- live preview & push ----------------------------------------------

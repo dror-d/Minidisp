@@ -21,10 +21,10 @@
       "widgets": [
         {
           "type": "image",
-          "x": 25,
-          "y": 25,
-          "w": 170,
-          "src": "logo.png"
+          "x": 50,
+          "y": 40,
+          "w": 160,
+          "src": "vvs.png"
         },
         {
           "type": "text",
@@ -228,6 +228,163 @@
           "fmt": "UP {v}",
           "size": "sm",
           "color": "muted"
+        },
+        {
+          "type": "image",
+          "x": 30,
+          "y": 920,
+          "w": 120,
+          "src": "vvs.png"
+        }
+      ]
+    },
+    {
+      "name": "Page 3",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 40,
+          "y": 50,
+          "fmt": "{v:.0f}%",
+          "text": "Network",
+          "color": "accent2"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 140,
+          "bind": "net.if",
+          "fmt": "{v:.0f}",
+          "text": "Adapter",
+          "color": "#0080FF"
+        },
+        {
+          "type": "text",
+          "x": 320,
+          "y": 150,
+          "bind": "net.ip",
+          "fmt": "{v:.0f}",
+          "size": "sm"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 550,
+          "bind": "net1.if",
+          "fmt": "{v:.0f}",
+          "text": "Adapter",
+          "color": "#0080FF"
+        },
+        {
+          "type": "text",
+          "x": 340,
+          "y": 560,
+          "bind": "net1.ip",
+          "fmt": "{v:.0f}",
+          "size": "sm"
+        },
+        {
+          "type": "text",
+          "x": 500,
+          "y": 290,
+          "fmt": "{v:.0f}%",
+          "text": "Up",
+          "size": "sm",
+          "color": "accent"
+        },
+        {
+          "type": "text",
+          "x": 510,
+          "y": 670,
+          "fmt": "{v:.0f}%",
+          "text": "Up",
+          "size": "sm",
+          "color": "accent"
+        },
+        {
+          "type": "text",
+          "x": 70,
+          "y": 280,
+          "fmt": "{v:.0f}%",
+          "text": "Down",
+          "size": "sm",
+          "color": "accent"
+        },
+        {
+          "type": "text",
+          "x": 70,
+          "y": 670,
+          "fmt": "{v:.0f}%",
+          "text": "Down",
+          "size": "sm",
+          "color": "accent"
+        },
+        {
+          "type": "text",
+          "x": 200,
+          "y": 280,
+          "bind": "net.down",
+          "fmt": "{v:.0f} Mbps"
+        },
+        {
+          "type": "text",
+          "x": 580,
+          "y": 290,
+          "bind": "net.up",
+          "fmt": "{v:.0f} Mbps"
+        },
+        {
+          "type": "chart",
+          "x": 80,
+          "y": 370,
+          "w": 310,
+          "h": 160,
+          "bind": "net.down"
+        },
+        {
+          "type": "chart",
+          "x": 80,
+          "y": 760,
+          "w": 310,
+          "h": 160,
+          "bind": "net1.down"
+        },
+        {
+          "type": "text",
+          "x": 590,
+          "y": 670,
+          "bind": "net1.up",
+          "fmt": "{v:.0f} Mbps"
+        },
+        {
+          "type": "text",
+          "x": 200,
+          "y": 670,
+          "bind": "net1.down",
+          "fmt": "{v:.0f} Mbps"
+        },
+        {
+          "type": "image",
+          "x": 780,
+          "y": 40,
+          "w": 170,
+          "src": "vvs.png"
+        },
+        {
+          "type": "chart",
+          "x": 500,
+          "y": 370,
+          "w": 310,
+          "h": 160,
+          "bind": "net.up"
+        },
+        {
+          "type": "chart",
+          "x": 510,
+          "y": 760,
+          "w": 310,
+          "h": 160,
+          "bind": "net1.up"
         }
       ]
     }

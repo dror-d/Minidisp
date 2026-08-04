@@ -86,6 +86,10 @@ void setBrightness(uint8_t pct) {
     s_gfx.setBrightness((uint16_t)pct * 255 / 100);
 }
 
+void setOrientation(bool portrait) {
+    s_gfx.setRotation(portrait ? 0 : 1); // native glass is portrait (170x320)
+}
+
 const char* boardName() { return MINIDISP_BOARD_NAME; }
 
 } // namespace hal

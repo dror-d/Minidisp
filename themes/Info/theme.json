@@ -1,0 +1,290 @@
+{
+  "name": "Info",
+  "author": "Kino",
+  "version": 1,
+  "colors": {
+    "bg": "#101418",
+    "fg": "#E6E6E6",
+    "accent": "#00C8FF",
+    "accent2": "#7CFC00",
+    "muted": "#5A6570",
+    "warn": "#FF5040"
+  },
+  "warnAbove": {
+    "cpu.load": 95,
+    "cpu.temp": 85,
+    "mem.pct": 90
+  },
+  "pages": [
+    {
+      "name": "Page 1",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 50,
+          "y": 110,
+          "text": "CPU",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 180,
+          "y": 110,
+          "bind": "cpu.load",
+          "fmt": "{v:.0f}%"
+        },
+        {
+          "type": "bar",
+          "x": 480,
+          "y": 130,
+          "w": 460,
+          "h": 50,
+          "bind": "cpu.load"
+        },
+        {
+          "type": "text",
+          "x": 290,
+          "y": 800,
+          "bind": "disk.pct",
+          "fmt": "{v:.0f}%",
+          "text": "Useage"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 890,
+          "fmt": "{v:.0f}%",
+          "text": "Free Space"
+        },
+        {
+          "type": "text",
+          "x": 280,
+          "y": 890,
+          "bind": "disk.free",
+          "fmt": "{v:.0f}GB"
+        },
+        {
+          "type": "text",
+          "x": 40,
+          "y": 790,
+          "fmt": "{v:.0f}%",
+          "text": "Disk Usage"
+        },
+        {
+          "type": "text",
+          "x": 180,
+          "y": 200,
+          "bind": "gpu.load",
+          "fmt": "{v:.0f}%"
+        },
+        {
+          "type": "text",
+          "x": 50,
+          "y": 210,
+          "text": "GPU",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 50,
+          "y": 300,
+          "text": "RAM",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 170,
+          "y": 30,
+          "text": "Usage",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 340,
+          "y": 30,
+          "fmt": "{v:.0f}",
+          "text": "Temp",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 350,
+          "y": 110,
+          "bind": "cpu.temp",
+          "fmt": "{v:.0f}C"
+        },
+        {
+          "type": "text",
+          "x": 350,
+          "y": 190,
+          "bind": "gpu.temp",
+          "fmt": "{v:.0f}C"
+        },
+        {
+          "type": "text",
+          "x": 180,
+          "y": 290,
+          "bind": "mem.pct",
+          "fmt": "{v:.0f}%"
+        },
+        {
+          "type": "bar",
+          "x": 480,
+          "y": 210,
+          "w": 460,
+          "h": 50,
+          "bind": "gpu.load"
+        },
+        {
+          "type": "bar",
+          "x": 480,
+          "y": 300,
+          "w": 460,
+          "h": 50,
+          "bind": "mem.used"
+        },
+        {
+          "type": "arc",
+          "x": 400,
+          "y": 640,
+          "r": 140,
+          "anchor": "mc",
+          "bind": "net.down",
+          "color": "#00FF00",
+          "bg": "#008000",
+          "thickness": 40,
+          "label": true
+        },
+        {
+          "type": "arc",
+          "x": 740,
+          "y": 650,
+          "r": 140,
+          "anchor": "mc",
+          "bind": "net.up",
+          "color": "#8000FF",
+          "bg": "#8080FF",
+          "thickness": 40,
+          "label": true
+        },
+        {
+          "type": "image",
+          "x": 820,
+          "y": 810,
+          "w": 150,
+          "src": "dashboard.png"
+        },
+        {
+          "type": "text",
+          "x": 50,
+          "y": 570,
+          "fmt": "{v:.0f}",
+          "text": "Network",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 710,
+          "y": 440,
+          "fmt": "{v:.0f}",
+          "text": "Up",
+          "size": "sm",
+          "color": "muted"
+        },
+        {
+          "type": "text",
+          "x": 350,
+          "y": 430,
+          "fmt": "{v:.0f}",
+          "text": "Down",
+          "size": "sm",
+          "color": "muted"
+        }
+      ]
+    },
+    {
+      "name": "Page 2",
+      "widgets": [
+        {
+          "type": "image",
+          "x": 280,
+          "y": 340,
+          "w": 340,
+          "src": "shower.png"
+        },
+        {
+          "type": "text",
+          "x": 230,
+          "y": 200,
+          "fmt": "{v:.0f}%",
+          "text": "Reef",
+          "color": "#DACDFE"
+        },
+        {
+          "type": "text",
+          "x": 340,
+          "y": 200,
+          "fmt": "{v:.0f}%",
+          "text": "Take",
+          "color": "#00FF00"
+        },
+        {
+          "type": "text",
+          "x": 450,
+          "y": 200,
+          "fmt": "{v:.0f}%",
+          "text": "A",
+          "color": "#FCFECD"
+        },
+        {
+          "type": "text",
+          "x": 510,
+          "y": 200,
+          "fmt": "{v:.0f}%",
+          "text": "Shower",
+          "color": "#00FFFF"
+        }
+      ]
+    },
+    {
+      "name": "Page 3",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 300,
+          "y": 370,
+          "fmt": "{v:.0f}%",
+          "text": "NOW!",
+          "size": "36",
+          "color": "#FF0000"
+        }
+      ]
+    },
+    {
+      "name": "Page 4",
+      "widgets": [
+        {
+          "type": "text",
+          "x": 320,
+          "y": 170,
+          "fmt": "{v:.0f}%",
+          "text": "Please",
+          "size": "28",
+          "color": "#80FFFF"
+        },
+        {
+          "type": "image",
+          "x": 310,
+          "y": 360,
+          "src": "icons8-smiley-face-94.png"
+        }
+      ]
+    }
+  ]
+}
