@@ -25,7 +25,15 @@ Also targeted: Waveshare ESP32-C6 Touch LCD 1.47", ESP32-1732S019 1.9".
 | `flasher/` | Browser flasher site (esp-web-tools), GitHub-Pages ready |
 | `docs/` | Protocol spec, theme format, research briefs |
 
-## Quick start (CYD)
+## Install (no tooling needed)
+
+1. **Flash the display** in Chrome/Edge: https://dror-d.github.io/Minidisp/
+2. **Download the companion**: grab `MinidispCompanion.exe` from the
+   [latest release](https://github.com/dror-d/Minidisp/releases/latest) and run
+   it — the display connects automatically. Tray icon → Theme Editor to design
+   your own themes and push them to the device live.
+
+## Quick start from source (CYD)
 
 > **Which CYD do I have?** Units with a single micro-USB are usually the
 > ILI9341 panel (`-e cyd`). Units with **two USB ports (micro + USB-C)** are

@@ -1,0 +1,41 @@
+name: Release companion app
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish companion/src/Minidisp.Companion -c Release -r win-x64
+          --self-contained -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: companion/src/Minidisp.Companion/bin/Release/net8.0-windows/win-x64/publish/MinidispCompanion.exe
+          generate_release_notes: true
+          body: |
+            **MinidispCompanion.exe** — Windows tray app (self-contained, no .NET install needed).
+
+            Run it after flashing your display at https://dror-d.github.io/Minidisp/ —
+            it finds the device automatically and starts streaming PC stats.
+            Includes the visual theme editor (tray icon → Theme Editor).
+
+            Note: Windows SmartScreen/Defender may warn on first run because the
+            exe is unsigned — choose "More info → Run anyway" / allow it.
