@@ -20,7 +20,7 @@ FIRMWARE_DIR = Path(__file__).resolve().parents[1]
 ROOT = FIRMWARE_DIR.parent
 FLASHER_DIR = ROOT / "flasher" / "firmware"
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 ENVS = {
     "cyd": {"chipFamily": "ESP32", "partitions": "minidisp_4mb.csv"},

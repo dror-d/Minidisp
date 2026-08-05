@@ -22,5 +22,9 @@ Open http://localhost:8000 in Chrome/Edge, connect the device, click Install.
 
 ## Publish
 
-Push this folder to a GitHub Pages branch (HTTPS is automatic). Keep the
-`firmware/` binaries on the same origin to avoid CORS issues.
+Deployment is automated: `.github/workflows/deploy-flasher.yml` builds all
+firmware envs and deploys this folder to GitHub Pages on every push to main.
+Live at: https://dror-d.github.io/Minidisp/
+
+If the first run fails with a Pages error, enable it once in the repo:
+Settings → Pages → Source: "GitHub Actions", then re-run the workflow.

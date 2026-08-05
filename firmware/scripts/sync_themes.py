@@ -9,12 +9,20 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "themes"
 DST = ROOT / "firmware" / "data" / "themes"
 
+# Only these ship in the factory LittleFS image (it must fit the 2MB
+# partition). Personal themes are pushed from the theme editor instead,
+# which resamples images to fit the device.
+BUNDLED = ("carbon", "gauges", "terminal")
+
 
 def main():
     if DST.exists():
         shutil.rmtree(DST)
     for theme_dir in sorted(SRC.iterdir()):
         if not theme_dir.is_dir() or not (theme_dir / "theme.json").exists():
+            continue
+        if theme_dir.name not in BUNDLED:
+            print(f"skipped {theme_dir.name} (personal theme — push it from the editor)")
             continue
         target = DST / theme_dir.name
         target.mkdir(parents=True)

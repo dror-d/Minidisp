@@ -2,13 +2,14 @@
   "name": "My Theme",
   "author": "Kino",
   "version": 1,
+  "orientation": "portrait",
   "colors": {
-    "bg": "#000040",
-    "fg": "#FF0000",
-    "accent": "#00FF00",
-    "accent2": "#FF0000",
-    "muted": "#FF8040",
-    "warn": "#FF8040"
+    "bg": "#101418",
+    "fg": "#E6E6E6",
+    "accent": "#00C8FF",
+    "accent2": "#7CFC00",
+    "muted": "#5A6570",
+    "warn": "#FF5040"
   },
   "warnAbove": {
     "cpu.load": 95,
@@ -17,7 +18,7 @@
   },
   "pages": [
     {
-      "name": "Page 1",
+      "name": "Portrait",
       "widgets": [
         {
           "type": "text",
@@ -30,7 +31,7 @@
         {
           "type": "text",
           "x": 40,
-          "y": 120,
+          "y": 140,
           "bind": "cpu.load",
           "fmt": "{v:.0f}%",
           "size": "xl"
@@ -45,77 +46,45 @@
         },
         {
           "type": "text",
-          "x": 140,
-          "y": 410,
-          "bind": "gpu.name",
+          "x": 400,
+          "y": 450,
+          "bind": "cpu.load",
           "fmt": "{v:.0f}%"
-        },
-        {
-          "type": "chart",
-          "x": 150,
-          "y": 510,
-          "w": 800,
-          "h": 400,
-          "bind": "gpu.load"
-        },
-        {
-          "type": "text",
-          "x": 40,
-          "y": 420,
-          "fmt": "{v:.0f}",
-          "text": "GPU",
-          "size": "sm",
-          "color": "muted"
-        },
-        {
-          "type": "text",
-          "x": 130,
-          "y": 50,
-          "bind": "cpu.name",
-          "fmt": "{v:.0f}%"
-        },
-        {
-          "type": "text",
-          "x": 670,
-          "y": 930,
-          "bind": "net.ip",
-          "fmt": "{v:.0f}"
-        },
-        {
-          "type": "arc",
-          "x": 80,
-          "y": 570,
-          "r": 70,
-          "anchor": "mc",
-          "bind": "gpu.load",
-          "thickness": 40,
-          "label": true
-        },
-        {
-          "type": "text",
-          "x": 140,
-          "y": 930,
-          "bind": "host",
-          "fmt": "{v:.0f}"
         },
         {
           "type": "image",
-          "x": 690,
-          "y": 30,
-          "w": 240,
+          "x": 180,
+          "y": 560,
+          "w": 600,
           "src": "vvs.png"
         }
       ]
     },
     {
-      "name": "Page 2",
+      "name": "Portrait copy",
       "widgets": [
         {
-          "type": "text",
-          "x": 30,
-          "y": 80,
-          "bind": "net.if",
-          "fmt": "{v:.0f}"
+          "type": "bar",
+          "x": 20,
+          "y": 30,
+          "w": 960,
+          "h": 50,
+          "bind": "cpu.load"
+        },
+        {
+          "type": "image",
+          "x": 180,
+          "y": 380,
+          "w": 580,
+          "src": "vvs.png"
+        },
+        {
+          "type": "bar",
+          "x": 20,
+          "y": 940,
+          "w": 970,
+          "h": 50,
+          "bind": "cpu.load"
         }
       ]
     }
